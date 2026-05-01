@@ -309,6 +309,18 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
         showIdleSuggestionBar(isTextSelected)
     }
 
+    private fun showPhoneNumberKeySuggestions(key: NumberLongKey) {
+        if (!this::binding.isInitialized) return
+        val phrase = key.getPhrase(this)
+        if (phrase.isNotEmpty()) {
+            isSuggestionBarActive = true
+            currentSuggestions = listOf(phrase)
+            currentHotstringExpansions = emptySet()
+            binding.wordSuggestionBar.setSuggestions(listOf(phrase))
+            binding.wordSuggestionBar.visibility = View.VISIBLE
+        }
+    }
+
     private fun showIdleSuggestionBar(hasSelection: Boolean) {
         if (!this::binding.isInitialized) return
         if (isPasswordField) {
@@ -439,6 +451,18 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
                 currentInputConnection?.commitText(word, 1)
             }
             hotstringBuffer = ""
+        } else if (imeMode == IMEMode.IME_KO_PHONE || imeMode == IMEMode.IME_EN_PHONE) {
+            val ic = currentInputConnection ?: return
+            ic.beginBatchEdit()
+            try {
+                val charBefore = ic.getTextBeforeCursor(1, 0)?.toString()
+                if (charBefore != null && NumberLongKey.fromDigit(charBefore) != null) {
+                    ic.deleteSurroundingText(1, 0)
+                }
+                ic.commitText(word, 1)
+            } finally {
+                ic.endBatchEdit()
+            }
         } else if (imeMode == IMEMode.IME_KO) {
             koreanUserWordStore.increment(word)
             hangulAssembler.clear()
@@ -900,7 +924,15 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
                     refreshSuggestions(composingText)
                 } else {
                     suggestionJob?.cancel()
-                    showIdleSuggestionBar(false)
+                    val isPhoneMode = imeMode == IMEMode.IME_KO_PHONE || imeMode == IMEMode.IME_EN_PHONE
+                    val phoneKey = if (isPhoneMode && key is String) {
+                        NumberLongKey.fromDigit(key)
+                    } else null
+                    if (phoneKey != null) {
+                        showPhoneNumberKeySuggestions(phoneKey)
+                    } else {
+                        showIdleSuggestionBar(false)
+                    }
                 }
                 setShiftAutomatically()
             }
@@ -1064,6 +1096,9 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
             showPhraseEditForm(key)
         }
         (keyboardViews[IMEMode.IME_KO_PUNCTUATION] as? PunctuationView)?.onEditNumberLongKeyRequest = { key ->
+            showPhraseEditForm(key)
+        }
+        (keyboardViews[IMEMode.IME_KO_PHONE] as? PhoneView)?.onEditNumberLongKeyRequest = { key ->
             showPhraseEditForm(key)
         }
         applyKeyboardLayout()

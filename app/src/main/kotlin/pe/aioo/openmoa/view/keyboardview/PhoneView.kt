@@ -2,22 +2,28 @@ package pe.aioo.openmoa.view.keyboardview
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.SharedPreferences
 import android.util.AttributeSet
 import androidx.constraintlayout.widget.ConstraintLayout
+import org.koin.core.component.KoinComponent
 import pe.aioo.openmoa.R
 import pe.aioo.openmoa.databinding.PhoneViewBinding
 import pe.aioo.openmoa.view.keytouchlistener.EnterKeyTouchListener
 import pe.aioo.openmoa.view.keytouchlistener.FunctionalKeyTouchListener
-import pe.aioo.openmoa.view.message.SpecialKey
+import pe.aioo.openmoa.view.keytouchlistener.QwertyKeyTouchListener
 import pe.aioo.openmoa.view.keytouchlistener.RepeatKeyTouchListener
 import pe.aioo.openmoa.view.keytouchlistener.SimpleKeyTouchListener
-import pe.aioo.openmoa.settings.SettingsPreferences
 import pe.aioo.openmoa.view.keytouchlistener.SpaceKeyTouchListener
+import pe.aioo.openmoa.view.message.SpecialKey
 import pe.aioo.openmoa.view.message.SpecialKeyMessage
 import pe.aioo.openmoa.view.message.StringKeyMessage
+import pe.aioo.openmoa.view.preview.KeyPreviewController
+import pe.aioo.openmoa.view.preview.QuickPhraseMenuPopup
 import pe.aioo.openmoa.view.skin.SkinApplier
+import pe.aioo.openmoa.quickphrase.NumberLongKey
+import pe.aioo.openmoa.settings.SettingsPreferences
 
-class PhoneView : ConstraintLayout {
+class PhoneView : ConstraintLayout, KoinComponent {
 
     constructor(context: Context) : super(context) {
         init()
@@ -33,15 +39,30 @@ class PhoneView : ConstraintLayout {
         init()
     }
 
+    var onEditNumberLongKeyRequest: ((NumberLongKey) -> Unit)? = null
+
     private lateinit var binding: PhoneViewBinding
     private var page = 0
     private var enterKeyListener: EnterKeyTouchListener? = null
+    private var previewController: KeyPreviewController? = null
+    private val numberKeyListeners = mutableListOf<QwertyKeyTouchListener>()
+    private val numberKeyPopups = List(10) { QuickPhraseMenuPopup(context) }
+    private val prefs by lazy {
+        context.getSharedPreferences(SettingsPreferences.PREFS_NAME, Context.MODE_PRIVATE)
+    }
+    private val numberPrefKeys = NumberLongKey.values().map { it.prefKey }.toSet()
+    private val prefChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key in numberPrefKeys && ::binding.isInitialized && page == 0) {
+            updateNumberKeyHints()
+        }
+    }
 
     private fun init() {
         inflate(context, R.layout.phone_view, this)
         binding = PhoneViewBinding.bind(this)
+        previewController = KeyPreviewController({ false }, SettingsPreferences.getKeyboardSkin(context))
+        setOnStaticKeyListeners()
         setPageOrNextPage(0, true)
-        setOnTouchListeners()
         SkinApplier.apply(this, SettingsPreferences.getKeyboardSkin(context))
     }
 
@@ -60,20 +81,12 @@ class PhoneView : ConstraintLayout {
         binding.punctuationKey.text = resources.getString(
             if (page == 0) R.string.key_punctuation else R.string.key_one_two_three
         )
+        updateNumberKeyListeners()
+        if (page == 0) updateNumberKeyHints()
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    private fun setOnTouchListeners() {
-        listOf(
-            binding.oneKey, binding.twoKey, binding.threeKey, binding.fourKey, binding.fiveKey,
-            binding.sixKey, binding.sevenKey, binding.eightKey, binding.nineKey, binding.zeroKey,
-        ).map {
-            it.apply {
-                setOnTouchListener(FunctionalKeyTouchListener(context) {
-                    StringKeyMessage(tag as String)
-                })
-            }
-        }
+    private fun setOnStaticKeyListeners() {
         binding.apply {
             backspaceKey.setOnTouchListener(
                 RepeatKeyTouchListener(context, SpecialKeyMessage(SpecialKey.BACKSPACE))
@@ -92,8 +105,70 @@ class PhoneView : ConstraintLayout {
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
+    private fun updateNumberKeyListeners() {
+        numberKeyListeners.forEach { it.cancel() }
+        numberKeyListeners.clear()
+
+        val numberKeys = listOf(
+            binding.oneKey, binding.twoKey, binding.threeKey, binding.fourKey, binding.fiveKey,
+            binding.sixKey, binding.sevenKey, binding.eightKey, binding.nineKey, binding.zeroKey,
+        )
+
+        if (page == 0) {
+            val longKeys = listOf(
+                NumberLongKey.NUM_1, NumberLongKey.NUM_2, NumberLongKey.NUM_3,
+                NumberLongKey.NUM_4, NumberLongKey.NUM_5, NumberLongKey.NUM_6,
+                NumberLongKey.NUM_7, NumberLongKey.NUM_8, NumberLongKey.NUM_9,
+                NumberLongKey.NUM_0,
+            )
+            numberKeys.zip(longKeys).forEachIndexed { i, (view, longKey) ->
+                val listener = QwertyKeyTouchListener(
+                    context,
+                    previewController,
+                    longKeyProvider = { longKey.getPhrase(context) },
+                    onTap = { StringKeyMessage(longKey.digit) },
+                    quickPhraseMenuPopup = numberKeyPopups[i],
+                    onEdit = { onEditNumberLongKeyRequest?.invoke(longKey) },
+                )
+                numberKeyListeners.add(listener)
+                view.setOnTouchListener(listener)
+            }
+        } else {
+            numberKeys.forEach { view ->
+                view.keyHint = ""
+                view.setOnTouchListener(FunctionalKeyTouchListener(context) {
+                    StringKeyMessage(view.tag as String)
+                })
+            }
+        }
+    }
+
+    private fun updateNumberKeyHints() {
+        if (!::binding.isInitialized || page != 0) return
+        listOf(
+            binding.oneKey to NumberLongKey.NUM_1, binding.twoKey to NumberLongKey.NUM_2,
+            binding.threeKey to NumberLongKey.NUM_3, binding.fourKey to NumberLongKey.NUM_4,
+            binding.fiveKey to NumberLongKey.NUM_5, binding.sixKey to NumberLongKey.NUM_6,
+            binding.sevenKey to NumberLongKey.NUM_7, binding.eightKey to NumberLongKey.NUM_8,
+            binding.nineKey to NumberLongKey.NUM_9, binding.zeroKey to NumberLongKey.NUM_0,
+        ).forEach { (view, longKey) ->
+            view.keyHint = longKey.getPhrase(context).take(1)
+        }
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        prefs.registerOnSharedPreferenceChangeListener(prefChangeListener)
+        updateNumberKeyHints()
+    }
+
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
+        prefs.unregisterOnSharedPreferenceChangeListener(prefChangeListener)
+        previewController?.cancel()
+        numberKeyListeners.forEach { it.cancel() }
+        numberKeyPopups.forEach { it.dismiss() }
         enterKeyListener?.cancel()
     }
 
