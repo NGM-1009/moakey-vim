@@ -20,6 +20,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import pe.aioo.openmoa.R
 import pe.aioo.openmoa.settings.SettingsPreferences
+import pe.aioo.openmoa.util.TextWidthClassifier
 import pe.aioo.openmoa.view.skin.SkinApplier
 
 class SuggestionBarView @JvmOverloads constructor(
@@ -130,12 +131,12 @@ class SuggestionBarView @JvmOverloads constructor(
         leftActions.visibility = VISIBLE
         rightActions.visibility = VISIBLE
         val isOneHand = SettingsPreferences.getOneHandMode(context).isReduced
-        val isKorean = text.any { it.code in 0xAC00..0xD7A3 || it.code in 0x3130..0x318F }
+        val isWide = TextWidthClassifier.isWideGlyphText(text)
         val maxLen = when {
-            isKorean && isOneHand -> MAX_CLIPBOARD_LEN_KO_ONE_HAND
-            isKorean -> MAX_CLIPBOARD_LEN_KO
-            isOneHand -> MAX_CLIPBOARD_LEN_EN_ONE_HAND
-            else -> MAX_CLIPBOARD_LEN_EN
+            isWide && isOneHand -> MAX_CLIPBOARD_LEN_WIDE_ONE_HAND
+            isWide -> MAX_CLIPBOARD_LEN_WIDE
+            isOneHand -> MAX_CLIPBOARD_LEN_NARROW_ONE_HAND
+            else -> MAX_CLIPBOARD_LEN_NARROW
         }
         val preview = if (text.length > maxLen) text.take(maxLen) + "…" else text
         container.addView(buildClipboardChip(preview, text, onPaste))
@@ -362,10 +363,10 @@ class SuggestionBarView @JvmOverloads constructor(
         private const val ICON_SIZE_DP = 20
         private const val ICON_PADDING_H_DP = 14
         private const val ICON_PADDING_V_DP = 4
-        private const val MAX_CLIPBOARD_LEN_KO = 7
-        private const val MAX_CLIPBOARD_LEN_EN = 12
-        private const val MAX_CLIPBOARD_LEN_KO_ONE_HAND = 3
-        private const val MAX_CLIPBOARD_LEN_EN_ONE_HAND = 6
+        private const val MAX_CLIPBOARD_LEN_WIDE = 7
+        private const val MAX_CLIPBOARD_LEN_NARROW = 12
+        private const val MAX_CLIPBOARD_LEN_WIDE_ONE_HAND = 3
+        private const val MAX_CLIPBOARD_LEN_NARROW_ONE_HAND = 6
         private const val REPEAT_DELAY_MS = 500L
         private const val REPEAT_INTERVAL_MS = 50L
     }
