@@ -174,6 +174,10 @@ class SettingsFragment : PreferenceFragmentCompat() {
             launchOverlayPermissionSettings()
             true
         }
+        pref<Preference>("pref_vim_keymap")?.setOnPreferenceClickListener {
+            startActivity(Intent(requireContext(), VimKeymapActivity::class.java))
+            true
+        }
     }
 
     private fun launchOverlayPermissionSettings() {

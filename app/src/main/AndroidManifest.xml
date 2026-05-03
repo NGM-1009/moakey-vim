@@ -70,6 +70,12 @@
             android:theme="@style/Theme.OpenMoa.Settings" />
 
         <activity
+            android:name="pe.aioo.openmoa.settings.VimKeymapActivity"
+            android:exported="false"
+            android:label="@string/vim_help_dialog_title"
+            android:theme="@style/Theme.OpenMoa.Settings" />
+
+        <activity
             android:name="pe.aioo.openmoa.settings.DevToolsActivity"
             android:exported="false"
             android:label="@string/dev_tools_title"

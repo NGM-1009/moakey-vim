@@ -85,26 +85,31 @@
             app:title="@string/settings_floating_indicator_title"
             app:summary="@string/settings_floating_indicator_description"
             app:defaultValue="true"
-            app:icon="@drawable/ic_pref_keyboard" />
+            app:icon="@drawable/ic_pref_float" />
 
         <Preference
             app:key="pref_overlay_permission"
             app:title="@string/settings_overlay_permission_title"
-            app:icon="@drawable/ic_pref_keyboard" />
+            app:icon="@drawable/ic_pref_layers" />
 
         <SwitchPreferenceCompat
             app:key="hw_capslock_to_ctrl"
             app:title="@string/settings_hw_capslock_ctrl_title"
             app:summary="@string/settings_hw_capslock_ctrl_description"
             app:defaultValue="false"
-            app:icon="@drawable/ic_pref_keyboard" />
+            app:icon="@drawable/ic_pref_caps" />
 
         <SwitchPreferenceCompat
             app:key="hw_tab_vim_mode"
             app:title="@string/settings_hw_tab_vim_title"
             app:summary="@string/settings_hw_tab_vim_description"
             app:defaultValue="false"
-            app:icon="@drawable/ic_pref_keyboard" />
+            app:icon="@drawable/ic_pref_vim" />
+
+        <Preference
+            app:key="pref_vim_keymap"
+            app:title="@string/settings_hw_tab_vim_keymap_title"
+            app:icon="@drawable/ic_pref_info" />
 
     </PreferenceCategory>
 

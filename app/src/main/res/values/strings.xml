@@ -325,8 +325,14 @@
     <string name="settings_overlay_permission_summary_denied">필요 — 탭하여 시스템 설정으로 이동</string>
     <string name="settings_hw_capslock_ctrl_title">CapsLock → LCtrl</string>
     <string name="settings_hw_capslock_ctrl_description">CapsLock을 누르는 동안 다른 키에 Ctrl을 적용합니다</string>
-    <string name="settings_hw_tab_vim_title">Tab-hold vim 모드</string>
-    <string name="settings_hw_tab_vim_description">Tab을 누른 채 h/j/k/l 등 vim 키를 사용합니다. Tab 단독 입력은 그대로 탭 동작합니다</string>
+    <string name="settings_hw_tab_vim_title">Vim 모드</string>
+    <string name="settings_hw_tab_vim_description">Tab을 누른 채 h/j/k/l 등 Vim 키를 사용합니다. Tab 단독 입력은 그대로 탭 동작합니다</string>
+    <string name="settings_hw_tab_vim_keymap_title">Vim 키 매핑 보기</string>
+    <string name="vim_help_dialog_title">Vim 키 매핑</string>
+    <string name="vim_intro_hint">Tab 을 누른 채 아래 키를 입력합니다 (Tab 단독 입력은 그대로 탭 동작)</string>
+    <string name="vim_section_move">이동</string>
+    <string name="vim_section_edit">편집</string>
+    <string name="vim_section_visual">비주얼 모드</string>
 
     <string name="floating_indicator_label_ko">한</string>
     <string name="floating_indicator_label_en">A</string>
