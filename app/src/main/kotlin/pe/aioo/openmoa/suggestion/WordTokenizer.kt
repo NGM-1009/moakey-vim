@@ -14,18 +14,31 @@ object WordTokenizer {
         "에", "도", "만", "의",
     )
 
-    fun extractKorean(text: String): String? {
-        val trimmed = text.trim()
-        if (trimmed.isEmpty()) return null
-        if (trimmed.length > MAX_LENGTH) return null
-        if (!trimmed.all { it in '가'..'힣' || it in 'ᄀ'..'ᇿ' || it in '㄰'..'㆏' }) return null
+    /** 유효성 검증만 수행. 조사·어미를 그대로 유지한 원형을 반환. 학습 저장용. */
+    fun normalizeKorean(text: String): String? {
+        val trimmed = validKorean(text) ?: return null
+        return if (trimmed.length < MIN_KOREAN_LENGTH) null else trimmed
+    }
 
+    /** 후행 조사를 제거하고 어간만 반환. 사전 조회용. */
+    fun extractKorean(text: String): String? {
+        val trimmed = validKorean(text) ?: return null
         val stem = KO_SUFFIXES.firstOrNull { trimmed.endsWith(it) }
             ?.let { trimmed.dropLast(it.length) }
             ?: trimmed
-
         return if (stem.length < MIN_KOREAN_LENGTH) null else stem
     }
+
+    private fun validKorean(text: String): String? {
+        val trimmed = text.trim()
+        if (trimmed.isEmpty() || trimmed.length > MAX_LENGTH) return null
+        if (!trimmed.all { it.isKorean() }) return null
+        return trimmed
+    }
+
+    // U+AC00..U+D7A3: 완성형, U+1100..U+11FF: 자모, U+3131..U+318E: 호환 자모
+    private fun Char.isKorean() =
+        this in '가'..'힣' || this in 'ᄀ'..'ᇿ' || this in 'ㄱ'..'ㆎ'
 
     fun extractEnglish(text: String): String? {
         val trimmed = text.trim()

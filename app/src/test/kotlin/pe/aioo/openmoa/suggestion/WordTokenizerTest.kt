@@ -224,4 +224,50 @@ class WordTokenizerTest {
     fun `extractEnglish 최소 글자수 경계값 - 정확히 4글자는 반환`() {
         assertEquals("test", WordTokenizer.extractEnglish("test"))
     }
+
+    // normalizeKorean: 조사 제거 없이 유효성 검증만
+    @Test
+    fun `normalizeKorean 조사 있는 단어 그대로 반환`() {
+        assertEquals("풍경으로", WordTokenizer.normalizeKorean("풍경으로"))
+        assertEquals("사랑은", WordTokenizer.normalizeKorean("사랑은"))
+        assertEquals("맥북에서", WordTokenizer.normalizeKorean("맥북에서"))
+    }
+
+    @Test
+    fun `normalizeKorean 조사 없는 순수 단어 그대로 반환`() {
+        assertEquals("사랑", WordTokenizer.normalizeKorean("사랑"))
+        assertEquals("풍경", WordTokenizer.normalizeKorean("풍경"))
+    }
+
+    @Test
+    fun `normalizeKorean 빈 문자열은 null 반환`() {
+        assertNull(WordTokenizer.normalizeKorean(""))
+        assertNull(WordTokenizer.normalizeKorean("   "))
+    }
+
+    @Test
+    fun `normalizeKorean 한 글자는 null 반환`() {
+        assertNull(WordTokenizer.normalizeKorean("가"))
+    }
+
+    @Test
+    fun `normalizeKorean 최대 길이 초과 시 null 반환`() {
+        assertNull(WordTokenizer.normalizeKorean("가".repeat(31)))
+    }
+
+    @Test
+    fun `normalizeKorean 한국어 아닌 문자 포함 시 null 반환`() {
+        assertNull(WordTokenizer.normalizeKorean("hello"))
+        assertNull(WordTokenizer.normalizeKorean("풍경abc"))
+    }
+
+    @Test
+    fun `normalizeKorean 앞뒤 공백 제거 후 처리`() {
+        assertEquals("풍경으로", WordTokenizer.normalizeKorean("  풍경으로  "))
+    }
+
+    @Test
+    fun `normalizeKorean 정확히 2글자는 반환`() {
+        assertEquals("사랑", WordTokenizer.normalizeKorean("사랑"))
+    }
 }

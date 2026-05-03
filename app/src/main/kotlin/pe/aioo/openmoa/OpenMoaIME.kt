@@ -384,12 +384,15 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
                 }
             }
         } else if (imeMode == IMEMode.IME_KO) {
-            val word = WordTokenizer.extractKorean(composingText) ?: return
+            val word = WordTokenizer.normalizeKorean(composingText) ?: return
+            val capturedText = composingText
             koreanUserWordStore.increment(word)
             lastLearnedWord = word
             lastLearnedIsKo = true
             serviceScope.launch {
-                if (koreanSuggestionEngine.containsInDictionary(word) && lastLearnedWord == word) {
+                // stem은 사전 조회용, ensureMinCount는 word(조사 포함 원형) 키로 통일
+                val stem = WordTokenizer.extractKorean(capturedText)
+                if (stem != null && koreanSuggestionEngine.containsInDictionary(stem) && lastLearnedWord == word) {
                     koreanUserWordStore.ensureMinCount(word, config.minLearnCount)
                 }
             }
@@ -408,9 +411,12 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
                 }
             }
         } else if (imeMode == IMEMode.IME_KO) {
-            val word = WordTokenizer.extractKorean(composingText) ?: return
+            val word = WordTokenizer.normalizeKorean(composingText) ?: return
+            val capturedText = composingText
             serviceScope.launch {
-                if (koreanSuggestionEngine.containsInDictionary(word)) {
+                // stem은 사전 조회용, increment/ensureMinCount는 word(조사 포함 원형) 키로 통일
+                val stem = WordTokenizer.extractKorean(capturedText) ?: word
+                if (koreanSuggestionEngine.containsInDictionary(stem)) {
                     koreanUserWordStore.increment(word)
                     koreanUserWordStore.ensureMinCount(word, config.minLearnCount)
                 }
