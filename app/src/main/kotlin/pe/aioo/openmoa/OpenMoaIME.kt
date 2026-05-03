@@ -176,7 +176,20 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
                     binding.clipboardPanel.refresh(this)
                 }
             }
+            // onUpdateSelection보다 나중에 실행되도록 다음 사이클로 미룸
+            inputBindingPollHandler.post { refreshClipboardPreviewIfIdle() }
         }
+    }
+
+    private fun refreshClipboardPreviewIfIdle() {
+        if (!this::binding.isInitialized) return
+        if (isPasswordField || !config.clipboardEnabled) return
+        if (composingText.isNotEmpty()) return
+        if (isTextSelected) return
+        if (isClipboardPanelVisible) return
+        if (activeFormEditText != null) return
+        if (!isSuggestionBarActive) return
+        showIdleSuggestionBar(hasSelection = false)
     }
 
     private fun finishComposing() {

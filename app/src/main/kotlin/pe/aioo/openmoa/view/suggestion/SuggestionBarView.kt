@@ -354,8 +354,8 @@ class SuggestionBarView @JvmOverloads constructor(
 
     companion object {
         private const val TAG_CLIPBOARD_CHIP = "clipboard_chip"
-        private const val TEXT_SIZE_SP = 17f
-        private const val PADDING_H_DP = 10
+        private const val TEXT_SIZE_SP = 15.3f
+        private const val PADDING_H_DP = 5
         private const val PADDING_V_DP = 4
         private const val CHIP_HEIGHT_DP = 24
         private const val CHIP_PADDING_H_DP = 6
