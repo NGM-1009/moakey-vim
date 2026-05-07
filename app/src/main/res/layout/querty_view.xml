@@ -9,7 +9,7 @@
 
     <!-- First Line -->
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/oneKey"
         style="@style/KeyStyle"
         android:text="@string/key_one"
@@ -22,7 +22,7 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toLeftOf="@+id/twoKey"/>
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/twoKey"
         style="@style/KeyStyle"
         android:text="@string/key_two"
@@ -34,7 +34,7 @@
         app:layout_constraintLeft_toRightOf="@+id/oneKey"
         app:layout_constraintRight_toLeftOf="@+id/threeKey" />
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/threeKey"
         style="@style/KeyStyle"
         android:text="@string/key_three"
@@ -46,7 +46,7 @@
         app:layout_constraintLeft_toRightOf="@+id/twoKey"
         app:layout_constraintRight_toLeftOf="@+id/fourKey" />
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/fourKey"
         style="@style/KeyStyle"
         android:text="@string/key_four"
@@ -58,7 +58,7 @@
         app:layout_constraintLeft_toRightOf="@+id/threeKey"
         app:layout_constraintRight_toLeftOf="@+id/fiveKey" />
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/fiveKey"
         style="@style/KeyStyle"
         android:text="@string/key_five"
@@ -70,7 +70,7 @@
         app:layout_constraintLeft_toRightOf="@+id/fourKey"
         app:layout_constraintRight_toLeftOf="@+id/sixKey" />
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/sixKey"
         style="@style/KeyStyle"
         android:text="@string/key_six"
@@ -82,7 +82,7 @@
         app:layout_constraintLeft_toRightOf="@+id/fiveKey"
         app:layout_constraintRight_toLeftOf="@+id/sevenKey" />
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/sevenKey"
         style="@style/KeyStyle"
         android:text="@string/key_seven"
@@ -94,7 +94,7 @@
         app:layout_constraintLeft_toRightOf="@+id/sixKey"
         app:layout_constraintRight_toLeftOf="@+id/eightKey" />
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/eightKey"
         style="@style/KeyStyle"
         android:text="@string/key_eight"
@@ -106,7 +106,7 @@
         app:layout_constraintLeft_toRightOf="@+id/sevenKey"
         app:layout_constraintRight_toLeftOf="@+id/nineKey" />
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/nineKey"
         style="@style/KeyStyle"
         android:text="@string/key_nine"
@@ -118,7 +118,7 @@
         app:layout_constraintLeft_toRightOf="@+id/eightKey"
         app:layout_constraintRight_toLeftOf="@+id/zeroKey" />
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/zeroKey"
         style="@style/KeyStyle"
         android:text="@string/key_zero"
@@ -132,7 +132,7 @@
 
     <!-- Second Line -->
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/qKey"
         style="@style/KeyStyle"
         tools:text="q"
@@ -145,7 +145,7 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toLeftOf="@+id/wKey"/>
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/wKey"
         style="@style/KeyStyle"
         tools:text="w"
@@ -157,7 +157,7 @@
         app:layout_constraintLeft_toRightOf="@+id/qKey"
         app:layout_constraintRight_toLeftOf="@+id/eKey" />
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/eKey"
         style="@style/KeyStyle"
         tools:text="e"
@@ -169,7 +169,7 @@
         app:layout_constraintLeft_toRightOf="@+id/wKey"
         app:layout_constraintRight_toLeftOf="@+id/rKey" />
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/rKey"
         style="@style/KeyStyle"
         tools:text="r"
@@ -181,7 +181,7 @@
         app:layout_constraintLeft_toRightOf="@+id/eKey"
         app:layout_constraintRight_toLeftOf="@+id/tKey" />
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/tKey"
         style="@style/KeyStyle"
         tools:text="t"
@@ -193,7 +193,7 @@
         app:layout_constraintLeft_toRightOf="@+id/rKey"
         app:layout_constraintRight_toLeftOf="@+id/yKey" />
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/yKey"
         style="@style/KeyStyle"
         tools:text="y"
@@ -205,7 +205,7 @@
         app:layout_constraintLeft_toRightOf="@+id/tKey"
         app:layout_constraintRight_toLeftOf="@+id/uKey" />
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/uKey"
         style="@style/KeyStyle"
         tools:text="u"
@@ -217,7 +217,7 @@
         app:layout_constraintLeft_toRightOf="@+id/yKey"
         app:layout_constraintRight_toLeftOf="@+id/iKey" />
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/iKey"
         style="@style/KeyStyle"
         tools:text="i"
@@ -229,7 +229,7 @@
         app:layout_constraintLeft_toRightOf="@+id/uKey"
         app:layout_constraintRight_toLeftOf="@+id/oKey" />
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/oKey"
         style="@style/KeyStyle"
         tools:text="o"
@@ -241,7 +241,7 @@
         app:layout_constraintLeft_toRightOf="@+id/iKey"
         app:layout_constraintRight_toLeftOf="@+id/pKey" />
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/pKey"
         style="@style/KeyStyle"
         tools:text="p"
@@ -269,7 +269,7 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toLeftOf="@+id/aKey"/>
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/aKey"
         style="@style/KeyStyle"
         tools:text="a"
@@ -281,7 +281,7 @@
         app:layout_constraintLeft_toRightOf="@+id/beforeASpace"
         app:layout_constraintRight_toLeftOf="@+id/sKey" />
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/sKey"
         style="@style/KeyStyle"
         tools:text="s"
@@ -293,7 +293,7 @@
         app:layout_constraintLeft_toRightOf="@+id/aKey"
         app:layout_constraintRight_toLeftOf="@+id/dKey" />
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/dKey"
         style="@style/KeyStyle"
         tools:text="d"
@@ -305,7 +305,7 @@
         app:layout_constraintLeft_toRightOf="@+id/sKey"
         app:layout_constraintRight_toLeftOf="@+id/fKey" />
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/fKey"
         style="@style/KeyStyle"
         tools:text="f"
@@ -317,7 +317,7 @@
         app:layout_constraintLeft_toRightOf="@+id/dKey"
         app:layout_constraintRight_toLeftOf="@+id/gKey" />
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/gKey"
         style="@style/KeyStyle"
         tools:text="g"
@@ -329,7 +329,7 @@
         app:layout_constraintLeft_toRightOf="@+id/fKey"
         app:layout_constraintRight_toLeftOf="@+id/hKey" />
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/hKey"
         style="@style/KeyStyle"
         tools:text="h"
@@ -341,7 +341,7 @@
         app:layout_constraintLeft_toRightOf="@+id/gKey"
         app:layout_constraintRight_toLeftOf="@+id/jKey" />
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/jKey"
         style="@style/KeyStyle"
         tools:text="j"
@@ -353,7 +353,7 @@
         app:layout_constraintLeft_toRightOf="@+id/hKey"
         app:layout_constraintRight_toLeftOf="@+id/kKey" />
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/kKey"
         style="@style/KeyStyle"
         tools:text="k"
@@ -365,7 +365,7 @@
         app:layout_constraintLeft_toRightOf="@+id/jKey"
         app:layout_constraintRight_toLeftOf="@+id/lKey" />
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/lKey"
         style="@style/KeyStyle"
         tools:text="l"
@@ -404,7 +404,7 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toLeftOf="@+id/zKey" />
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/zKey"
         style="@style/KeyStyle"
         tools:text="z"
@@ -416,7 +416,7 @@
         app:layout_constraintLeft_toRightOf="@+id/shiftKey"
         app:layout_constraintRight_toLeftOf="@+id/xKey" />
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/xKey"
         style="@style/KeyStyle"
         tools:text="x"
@@ -428,7 +428,7 @@
         app:layout_constraintLeft_toRightOf="@+id/zKey"
         app:layout_constraintRight_toLeftOf="@+id/cKey" />
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/cKey"
         style="@style/KeyStyle"
         tools:text="c"
@@ -440,7 +440,7 @@
         app:layout_constraintLeft_toRightOf="@+id/xKey"
         app:layout_constraintRight_toLeftOf="@+id/vKey" />
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/vKey"
         style="@style/KeyStyle"
         tools:text="v"
@@ -452,7 +452,7 @@
         app:layout_constraintLeft_toRightOf="@+id/cKey"
         app:layout_constraintRight_toLeftOf="@+id/bKey" />
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/bKey"
         style="@style/KeyStyle"
         tools:text="b"
@@ -464,7 +464,7 @@
         app:layout_constraintLeft_toRightOf="@+id/vKey"
         app:layout_constraintRight_toLeftOf="@+id/nKey" />
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/nKey"
         style="@style/KeyStyle"
         tools:text="n"
@@ -476,7 +476,7 @@
         app:layout_constraintLeft_toRightOf="@+id/bKey"
         app:layout_constraintRight_toLeftOf="@+id/mKey" />
 
-    <pe.aioo.openmoa.view.keyboardview.qwerty.HintKeyView
+    <dev.bsb.moakeyvim.view.keyboardview.qwerty.HintKeyView
         android:id="@+id/mKey"
         style="@style/KeyStyle"
         tools:text="m"

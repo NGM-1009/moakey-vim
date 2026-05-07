@@ -45,7 +45,7 @@
 
     </LinearLayout>
 
-    <pe.aioo.openmoa.view.suggestion.SuggestionBarView
+    <dev.bsb.moakeyvim.view.suggestion.SuggestionBarView
         android:id="@+id/wordSuggestionBar"
         android:layout_width="match_parent"
         android:layout_height="34dp"
@@ -65,12 +65,12 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <pe.aioo.openmoa.view.KeyboardFrameLayout
+        <dev.bsb.moakeyvim.view.KeyboardFrameLayout
             android:id="@+id/keyboardFrameLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
-        <pe.aioo.openmoa.clipboard.ClipboardPanelView
+        <dev.bsb.moakeyvim.clipboard.ClipboardPanelView
             android:id="@+id/clipboardPanel"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

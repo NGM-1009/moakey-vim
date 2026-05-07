@@ -34,58 +34,58 @@
         </service>
 
         <activity
-            android:name="pe.aioo.openmoa.settings.SettingsActivity"
+            android:name="dev.bsb.moakeyvim.settings.SettingsActivity"
             android:exported="false"
             android:label="@string/app_name"
-            android:theme="@style/Theme.OpenMoa.Settings" />
+            android:theme="@style/Theme.MoaKeyVim.Settings" />
 
         <activity
-            android:name="pe.aioo.openmoa.settings.ShortcutSettingsActivity"
+            android:name="dev.bsb.moakeyvim.settings.ShortcutSettingsActivity"
             android:exported="false"
             android:label="@string/settings_shortcut_title"
-            android:theme="@style/Theme.OpenMoa.Settings" />
+            android:theme="@style/Theme.MoaKeyVim.Settings" />
 
         <activity
-            android:name="pe.aioo.openmoa.settings.PhraseEditActivity"
+            android:name="dev.bsb.moakeyvim.settings.PhraseEditActivity"
             android:exported="false"
-            android:theme="@style/Theme.OpenMoa.QuickPhraseEdit" />
+            android:theme="@style/Theme.MoaKeyVim.QuickPhraseEdit" />
 
         <activity
-            android:name="pe.aioo.openmoa.settings.GestureAngleActivity"
+            android:name="dev.bsb.moakeyvim.settings.GestureAngleActivity"
             android:exported="false"
             android:label="@string/settings_gesture_angle_title"
-            android:theme="@style/Theme.OpenMoa.Settings"
+            android:theme="@style/Theme.MoaKeyVim.Settings"
             android:windowSoftInputMode="adjustResize" />
 
         <activity
-            android:name="pe.aioo.openmoa.settings.HotstringListActivity"
+            android:name="dev.bsb.moakeyvim.settings.HotstringListActivity"
             android:exported="false"
             android:label="@string/settings_hotstring_manage_title"
-            android:theme="@style/Theme.OpenMoa.Settings" />
+            android:theme="@style/Theme.MoaKeyVim.Settings" />
 
         <activity
-            android:name="pe.aioo.openmoa.settings.LearnedWordsActivity"
+            android:name="dev.bsb.moakeyvim.settings.LearnedWordsActivity"
             android:exported="false"
             android:label="@string/settings_learned_words_title"
-            android:theme="@style/Theme.OpenMoa.Settings" />
+            android:theme="@style/Theme.MoaKeyVim.Settings" />
 
         <activity
-            android:name="pe.aioo.openmoa.settings.VimKeymapActivity"
+            android:name="dev.bsb.moakeyvim.settings.VimKeymapActivity"
             android:exported="false"
             android:label="@string/vim_help_dialog_title"
-            android:theme="@style/Theme.OpenMoa.Settings" />
+            android:theme="@style/Theme.MoaKeyVim.Settings" />
 
         <activity
-            android:name="pe.aioo.openmoa.settings.DevToolsActivity"
+            android:name="dev.bsb.moakeyvim.settings.DevToolsActivity"
             android:exported="false"
             android:label="@string/dev_tools_title"
-            android:theme="@style/Theme.OpenMoa.Settings" />
+            android:theme="@style/Theme.MoaKeyVim.Settings" />
 
         <activity
-            android:name="pe.aioo.openmoa.clipboard.ClipboardEditActivity"
+            android:name="dev.bsb.moakeyvim.clipboard.ClipboardEditActivity"
             android:exported="false"
             android:label="@string/clipboard_edit_title"
-            android:theme="@style/Theme.OpenMoa.Settings" />
+            android:theme="@style/Theme.MoaKeyVim.Settings" />
 
     </application>
 
