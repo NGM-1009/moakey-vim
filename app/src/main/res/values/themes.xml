@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Widget.MoaKeyVim.Toolbar.Surface" parent="Widget.Material3.Toolbar">
+        <item name="android:background">?attr/colorSurface</item>
+        <item name="titleTextColor">?attr/colorOnSurface</item>
+        <item name="navigationIconTint">?attr/colorOnSurface</item>
+        <item name="android:elevation">0dp</item>
+    </style>
+
+    <style name="Theme.MoaKeyVim.Settings" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
+        <item name="toolbarStyle">@style/Widget.MoaKeyVim.Toolbar.Surface</item>
+        <item name="android:statusBarColor">?attr/colorSurface</item>
+        <item name="android:navigationBarColor">?attr/colorSurface</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
+
+    <style name="Theme.MoaKeyVim.QuickPhraseEdit" parent="Theme.Material3.DayNight.Dialog.Alert">
+        <item name="windowNoTitle">true</item>
+    </style>
+
+</resources>

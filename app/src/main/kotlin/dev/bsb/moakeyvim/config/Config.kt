@@ -1,0 +1,38 @@
+package dev.bsb.moakeyvim.config
+
+import android.content.Context
+import dev.bsb.moakeyvim.settings.SettingsPreferences
+
+class Config(private val context: Context) {
+    val longPressRepeatTime: Long = 50L
+    val longPressThresholdTime: Long
+        get() = SettingsPreferences.getLongPressTime(context).millis
+    val gestureThreshold: Float
+        get() {
+            val dp = SettingsPreferences.getGestureThreshold(context)
+            return dp * context.resources.displayMetrics.density
+        }
+    val hapticStrength: HapticStrength
+        get() = SettingsPreferences.getHapticStrength(context)
+    val soundVolume: SoundVolume
+        get() = SettingsPreferences.getSoundVolume(context)
+    val soundType: SoundType
+        get() = SettingsPreferences.getSoundType(context)
+    val maxSuggestionCount: Int = 10
+    val minLearnCount: Int
+        get() = SettingsPreferences.getMinLearnCount(context)
+    val wordSuggestionEnabled: Boolean
+        get() = SettingsPreferences.getWordSuggestionEnabled(context)
+    val koreanWordSuggestionEnabled: Boolean
+        get() = SettingsPreferences.getKoreanWordSuggestionEnabled(context)
+    val keyPreviewEnabled: Boolean
+        get() = SettingsPreferences.getKeyPreviewEnabled(context)
+    val autoCapitalizeEnglish: Boolean
+        get() = SettingsPreferences.getAutoCapitalizeEnglish(context)
+    val gestureAngles: GestureAngles
+        get() = SettingsPreferences.getGestureAngles(context)
+    val clipboardEnabled: Boolean
+        get() = SettingsPreferences.getClipboardEnabled(context)
+    val landscapeQwerty: Boolean
+        get() = SettingsPreferences.getLandscapeQwerty(context)
+}
