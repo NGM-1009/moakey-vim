@@ -1289,6 +1289,7 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
         refreshKoViewIfNeeded()
         (keyboardViews[IMEMode.IME_KO] as? OpenMoaView)?.refreshQuickPhraseBadges()
         (keyboardViews[IMEMode.IME_KO] as? OpenMoaView)?.refreshUserCharLabels()
+        (keyboardViews[IMEMode.IME_KO] as? OpenMoaView)?.refreshEmojiIcon()
         applyKeyboardLayout()
         when ((info?.inputType ?: 0) and InputType.TYPE_MASK_CLASS) {
             InputType.TYPE_CLASS_NUMBER -> {

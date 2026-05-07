@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
+import android.graphics.drawable.LayerDrawable
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
@@ -39,6 +40,7 @@ import pe.aioo.openmoa.quickphrase.QuickPhraseKey
 import pe.aioo.openmoa.quickphrase.QuickPhraseRepository
 import pe.aioo.openmoa.view.preview.KeyPreviewController
 import pe.aioo.openmoa.view.preview.QuickPhraseMenuPopup
+import androidx.core.content.ContextCompat
 import pe.aioo.openmoa.config.KeyboardSkin
 import pe.aioo.openmoa.view.skin.SkinApplier
 
@@ -101,9 +103,20 @@ class OpenMoaView : ConstraintLayout, KoinComponent {
         moakeyBinding?.emojiKey?.foregroundTintList = emojiTint
         moeumKeyBgPressed = SkinApplier.buildKeyDrawable(context, skin, pressed = true)
         moeumKeyBgNormal = SkinApplier.buildKeyDrawable(context, skin, pressed = false)
+        refreshEmojiIcon()
+    }
+
+    fun refreshEmojiIcon() {
         if (SettingsPreferences.getOneHandMode(context).isReduced) {
-            twoHandBinding?.emojiKey?.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 16f)
-            moakeyBinding?.emojiKey?.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 16f)
+            val base = ContextCompat.getDrawable(context, R.drawable.ic_emoji) ?: return
+            val sizePx = (24 * 0.8f * resources.displayMetrics.density).toInt()
+            fun scaledEmoji() = LayerDrawable(arrayOf(base.mutate()))
+                .also { it.setLayerSize(0, sizePx, sizePx) }
+            twoHandBinding?.emojiKey?.foreground = scaledEmoji()
+            moakeyBinding?.emojiKey?.foreground = scaledEmoji()
+        } else {
+            twoHandBinding?.emojiKey?.foreground = ContextCompat.getDrawable(context, R.drawable.ic_emoji)
+            moakeyBinding?.emojiKey?.foreground = ContextCompat.getDrawable(context, R.drawable.ic_emoji)
         }
     }
 
