@@ -79,7 +79,10 @@
     <string name="key_moeum">ㅣ·ㅡ</string>
 
     <string name="key_language_settings_hint">설정</string>
-    <string name="settings_hangul_section">모아키 설정</string>
+    <string name="settings_hangul_section">입력 방식</string>
+    <string name="settings_appearance_section">키보드 외형</string>
+    <string name="settings_key_behavior_section">키 동작</string>
+    <string name="settings_input_assist_section">입력 보조</string>
     <string name="settings_english_section">키보드 입력</string>
     <string name="settings_shortcut_section">단축 기능</string>
     <string name="settings_hangul_input_mode_title">입력 방식</string>
@@ -112,7 +115,7 @@
     <string name="settings_landscape_qwerty_title">가로 모드 두벌식</string>
     <string name="settings_landscape_qwerty_description">가로 모드일 때 한글 자판을 쿼티로 표시합니다</string>
 
-    <string name="settings_keyboard_section">키보드 설정</string>
+    <string name="settings_keyboard_section">키보드 외형</string>
     <string name="settings_keypad_height_title">키패드 높이 조절</string>
     <string name="settings_keypad_height_normal">높게</string>
     <string name="settings_keypad_height_low">보통(기본)</string>

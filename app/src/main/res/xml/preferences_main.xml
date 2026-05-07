@@ -26,7 +26,7 @@
 
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="@string/settings_keyboard_section">
+    <PreferenceCategory app:title="@string/settings_appearance_section">
 
         <ListPreference
             app:key="keyboard_skin"
@@ -55,6 +55,10 @@
             app:defaultValue="true"
             app:icon="@drawable/ic_pref_preview" />
 
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/settings_key_behavior_section">
+
         <ListPreference
             app:key="long_press_time"
             app:title="@string/settings_long_press_time_title"
@@ -78,83 +82,7 @@
 
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="@string/settings_hw_keyboard_section">
-
-        <SwitchPreferenceCompat
-            app:key="floating_indicator_enabled"
-            app:title="@string/settings_floating_indicator_title"
-            app:summary="@string/settings_floating_indicator_description"
-            app:defaultValue="true"
-            app:icon="@drawable/ic_pref_float" />
-
-        <Preference
-            app:key="pref_overlay_permission"
-            app:title="@string/settings_overlay_permission_title"
-            app:icon="@drawable/ic_pref_layers" />
-
-        <SwitchPreferenceCompat
-            app:key="hw_capslock_to_ctrl"
-            app:title="@string/settings_hw_capslock_ctrl_title"
-            app:summary="@string/settings_hw_capslock_ctrl_description"
-            app:defaultValue="false"
-            app:icon="@drawable/ic_pref_caps" />
-
-        <SwitchPreferenceCompat
-            app:key="hw_tab_vim_mode"
-            app:title="@string/settings_hw_tab_vim_title"
-            app:summary="@string/settings_hw_tab_vim_description"
-            app:defaultValue="false"
-            app:icon="@drawable/ic_pref_vim" />
-
-        <Preference
-            app:key="pref_vim_keymap"
-            app:title="@string/settings_hw_tab_vim_keymap_title"
-            app:icon="@drawable/ic_pref_info" />
-
-    </PreferenceCategory>
-
-    <PreferenceCategory app:title="@string/settings_clipboard_section">
-
-        <SwitchPreferenceCompat
-            app:key="clipboard_enabled"
-            app:title="@string/settings_clipboard_enabled_title"
-            app:summary="@string/settings_clipboard_enabled_description"
-            app:defaultValue="true"
-            app:icon="@drawable/ic_pref_replace" />
-
-        <ListPreference
-            app:key="clipboard_max_items"
-            app:title="@string/settings_clipboard_max_items_title"
-            app:useSimpleSummaryProvider="true"
-            android:negativeButtonText="@string/dialog_close"
-            app:icon="@drawable/ic_pref_height" />
-
-        <ListPreference
-            app:key="clipboard_expiry_minutes"
-            app:title="@string/settings_clipboard_expiry_title"
-            app:useSimpleSummaryProvider="true"
-            android:negativeButtonText="@string/dialog_close"
-            app:icon="@drawable/ic_pref_timer" />
-
-    </PreferenceCategory>
-
-    <PreferenceCategory app:title="@string/settings_shortcut_section">
-
-        <Preference
-            app:key="pref_shortcut"
-            app:title="@string/settings_shortcut_title"
-            app:summary="@string/settings_shortcut_description"
-            app:icon="@drawable/ic_pref_bolt" />
-
-        <Preference
-            app:key="pref_hotstring"
-            app:title="@string/settings_hotstring_title"
-            app:summary="@string/settings_hotstring_description"
-            app:icon="@drawable/ic_pref_replace" />
-
-    </PreferenceCategory>
-
-    <PreferenceCategory app:title="@string/settings_english_section">
+    <PreferenceCategory app:title="@string/settings_input_assist_section">
 
         <SwitchPreferenceCompat
             app:key="auto_space_period"
@@ -200,6 +128,43 @@
             app:summary="@string/settings_learned_words_description"
             app:icon="@drawable/ic_pref_suggest" />
 
+        <Preference
+            app:key="pref_shortcut"
+            app:title="@string/settings_shortcut_title"
+            app:summary="@string/settings_shortcut_description"
+            app:icon="@drawable/ic_pref_bolt" />
+
+        <Preference
+            app:key="pref_hotstring"
+            app:title="@string/settings_hotstring_title"
+            app:summary="@string/settings_hotstring_description"
+            app:icon="@drawable/ic_pref_replace" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/settings_clipboard_section">
+
+        <SwitchPreferenceCompat
+            app:key="clipboard_enabled"
+            app:title="@string/settings_clipboard_enabled_title"
+            app:summary="@string/settings_clipboard_enabled_description"
+            app:defaultValue="true"
+            app:icon="@drawable/ic_pref_replace" />
+
+        <ListPreference
+            app:key="clipboard_max_items"
+            app:title="@string/settings_clipboard_max_items_title"
+            app:useSimpleSummaryProvider="true"
+            android:negativeButtonText="@string/dialog_close"
+            app:icon="@drawable/ic_pref_height" />
+
+        <ListPreference
+            app:key="clipboard_expiry_minutes"
+            app:title="@string/settings_clipboard_expiry_title"
+            app:useSimpleSummaryProvider="true"
+            android:negativeButtonText="@string/dialog_close"
+            app:icon="@drawable/ic_pref_timer" />
+
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/settings_feedback_section">
@@ -224,6 +189,41 @@
             app:useSimpleSummaryProvider="true"
             android:negativeButtonText="@string/dialog_close"
             app:icon="@drawable/ic_pref_sound" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/settings_hw_keyboard_section">
+
+        <SwitchPreferenceCompat
+            app:key="floating_indicator_enabled"
+            app:title="@string/settings_floating_indicator_title"
+            app:summary="@string/settings_floating_indicator_description"
+            app:defaultValue="true"
+            app:icon="@drawable/ic_pref_float" />
+
+        <Preference
+            app:key="pref_overlay_permission"
+            app:title="@string/settings_overlay_permission_title"
+            app:icon="@drawable/ic_pref_layers" />
+
+        <SwitchPreferenceCompat
+            app:key="hw_capslock_to_ctrl"
+            app:title="@string/settings_hw_capslock_ctrl_title"
+            app:summary="@string/settings_hw_capslock_ctrl_description"
+            app:defaultValue="false"
+            app:icon="@drawable/ic_pref_caps" />
+
+        <SwitchPreferenceCompat
+            app:key="hw_tab_vim_mode"
+            app:title="@string/settings_hw_tab_vim_title"
+            app:summary="@string/settings_hw_tab_vim_description"
+            app:defaultValue="false"
+            app:icon="@drawable/ic_pref_vim" />
+
+        <Preference
+            app:key="pref_vim_keymap"
+            app:title="@string/settings_hw_tab_vim_keymap_title"
+            app:icon="@drawable/ic_pref_info" />
 
     </PreferenceCategory>
 

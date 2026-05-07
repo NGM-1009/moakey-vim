@@ -3,6 +3,7 @@ package pe.aioo.openmoa.settings
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -74,6 +75,15 @@ class SettingsFragment : PreferenceFragmentCompat() {
     private var devTapCount = 0
     private var devTapLastTime = 0L
 
+    private val prefChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        when (key) {
+            SettingsPreferences.KEY_CLIPBOARD_ENABLED -> updateClipboardDependents()
+            SettingsPreferences.KEY_WORD_SUGGESTION_ENABLED,
+            SettingsPreferences.KEY_KOREAN_WORD_SUGGESTION_ENABLED -> updateSuggestionDependents()
+            SettingsPreferences.KEY_HW_TAB_VIM_MODE -> updateVimDependents()
+        }
+    }
+
     private val importLauncher = registerForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri -> if (uri != null) importSettings(uri) }
@@ -84,12 +94,23 @@ class SettingsFragment : PreferenceFragmentCompat() {
         setupListPreferences()
         setupClickPreferences()
         setupVersionPreference()
+        updateClipboardDependents()
+        updateSuggestionDependents()
+        updateVimDependents()
     }
 
     override fun onResume() {
         super.onResume()
         updateGestureAngleSummary()
         updateOverlayPermissionSummary()
+        preferenceManager.sharedPreferences
+            ?.registerOnSharedPreferenceChangeListener(prefChangeListener)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        preferenceManager.sharedPreferences
+            ?.unregisterOnSharedPreferenceChangeListener(prefChangeListener)
     }
 
     private fun setupListPreferences() {
@@ -225,6 +246,27 @@ class SettingsFragment : PreferenceFragmentCompat() {
                 true
             }
         }
+    }
+
+    private fun updateClipboardDependents() {
+        val prefs = preferenceManager.sharedPreferences ?: return
+        val enabled = prefs.getBoolean(SettingsPreferences.KEY_CLIPBOARD_ENABLED, true)
+        pref<Preference>(SettingsPreferences.KEY_CLIPBOARD_MAX_ITEMS)?.isEnabled = enabled
+        pref<Preference>(SettingsPreferences.KEY_CLIPBOARD_EXPIRY_MINUTES)?.isEnabled = enabled
+    }
+
+    private fun updateSuggestionDependents() {
+        val prefs = preferenceManager.sharedPreferences ?: return
+        val anyEnabled = prefs.getBoolean(SettingsPreferences.KEY_WORD_SUGGESTION_ENABLED, false)
+            || prefs.getBoolean(SettingsPreferences.KEY_KOREAN_WORD_SUGGESTION_ENABLED, false)
+        pref<Preference>(SettingsPreferences.KEY_MIN_LEARN_COUNT)?.isEnabled = anyEnabled
+        pref<Preference>("pref_learned_words")?.isEnabled = anyEnabled
+    }
+
+    private fun updateVimDependents() {
+        val prefs = preferenceManager.sharedPreferences ?: return
+        val enabled = prefs.getBoolean(SettingsPreferences.KEY_HW_TAB_VIM_MODE, false)
+        pref<Preference>("pref_vim_keymap")?.isEnabled = enabled
     }
 
     private fun updateGestureAngleSummary() {
