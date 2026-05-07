@@ -208,10 +208,10 @@ object SettingsPreferences {
         prefs(context).getString(KEY_MIN_LEARN_COUNT, null)?.toIntOrNull() ?: 2
 
     fun getClipboardMaxItems(context: Context): Int =
-        prefs(context).getString(KEY_CLIPBOARD_MAX_ITEMS, null)?.toIntOrNull() ?: 20
+        prefs(context).getString(KEY_CLIPBOARD_MAX_ITEMS, null)?.toIntOrNull() ?: 50
 
     fun getClipboardExpiryMinutes(context: Context): Int =
-        prefs(context).getString(KEY_CLIPBOARD_EXPIRY_MINUTES, null)?.toIntOrNull() ?: 60
+        prefs(context).getString(KEY_CLIPBOARD_EXPIRY_MINUTES, null)?.toIntOrNull() ?: 10080
 
     fun getFloatingIndicatorEnabled(context: Context): Boolean =
         prefs(context).getBoolean(KEY_FLOATING_INDICATOR_ENABLED, true)

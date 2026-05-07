@@ -124,20 +124,20 @@ class SettingsFragment : PreferenceFragmentCompat() {
     private fun setupClipboardListPreferences() {
         val ctx = requireContext()
         pref<ListPreference>(SettingsPreferences.KEY_CLIPBOARD_MAX_ITEMS)?.apply {
-            entries = arrayOf("10", "20", "30", "50")
-            entryValues = arrayOf("10", "20", "30", "50")
-            if (value == null) value = "20"
+            entries = arrayOf("20", "50", "100", "200")
+            entryValues = arrayOf("20", "50", "100", "200")
+            if (value == null) value = "50"
         }
         pref<ListPreference>(SettingsPreferences.KEY_CLIPBOARD_EXPIRY_MINUTES)?.apply {
             entries = arrayOf(
-                ctx.getString(R.string.settings_clipboard_expiry_30min),
-                ctx.getString(R.string.settings_clipboard_expiry_1h),
-                ctx.getString(R.string.settings_clipboard_expiry_3h),
+                ctx.getString(R.string.settings_clipboard_expiry_6h),
                 ctx.getString(R.string.settings_clipboard_expiry_1d),
+                ctx.getString(R.string.settings_clipboard_expiry_1w),
+                ctx.getString(R.string.settings_clipboard_expiry_1m),
                 ctx.getString(R.string.settings_clipboard_expiry_unlimited),
             )
-            entryValues = arrayOf("30", "60", "180", "1440", "0")
-            if (value == null) value = "60"
+            entryValues = arrayOf("360", "1440", "10080", "43200", "0")
+            if (value == null) value = "10080"
         }
     }
 

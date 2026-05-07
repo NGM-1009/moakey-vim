@@ -256,10 +256,10 @@
     <string name="settings_clipboard_enabled_description">스페이스바를 위로 스와이프하면 클립보드 목록이 표시됩니다</string>
     <string name="settings_clipboard_max_items_title">최대 저장 개수</string>
     <string name="settings_clipboard_expiry_title">자동 삭제 기간</string>
-    <string name="settings_clipboard_expiry_30min">30분</string>
-    <string name="settings_clipboard_expiry_1h">1시간</string>
-    <string name="settings_clipboard_expiry_3h">3시간</string>
-    <string name="settings_clipboard_expiry_1d">하루</string>
+    <string name="settings_clipboard_expiry_6h">6시간</string>
+    <string name="settings_clipboard_expiry_1d">1일</string>
+    <string name="settings_clipboard_expiry_1w">1주일</string>
+    <string name="settings_clipboard_expiry_1m">1개월</string>
     <string name="settings_clipboard_expiry_unlimited">무제한</string>
 
     <string name="clipboard_title">클립보드</string>
