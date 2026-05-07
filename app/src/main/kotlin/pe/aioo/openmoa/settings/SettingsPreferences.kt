@@ -14,6 +14,7 @@ import pe.aioo.openmoa.config.OneHandMode
 import pe.aioo.openmoa.config.SoundVolume
 import pe.aioo.openmoa.config.SpaceLongPressAction
 import pe.aioo.openmoa.hotstring.HotstringSortOrder
+import pe.aioo.openmoa.settings.learnedwords.LearnedWordsSortOrder
 import pe.aioo.openmoa.quickphrase.UserCharKey
 
 object SettingsPreferences {
@@ -50,6 +51,7 @@ object SettingsPreferences {
     const val KEY_OVERLAY_PERMISSION_NOTIFIED = "overlay_permission_notified"
     const val KEY_HW_CAPSLOCK_TO_CTRL = "hw_capslock_to_ctrl"
     const val KEY_HW_TAB_VIM_MODE = "hw_tab_vim_mode"
+    const val KEY_LEARNED_WORDS_SORT_ORDER = "learned_words_sort_order"
 
     val ALL_KEYS = setOf(
         KEY_HANGUL_INPUT_MODE,
@@ -243,6 +245,13 @@ object SettingsPreferences {
 
     fun getTabVimMode(context: Context): Boolean =
         prefs(context).getBoolean(KEY_HW_TAB_VIM_MODE, false)
+
+    fun getLearnedWordsSortOrder(context: Context): LearnedWordsSortOrder =
+        LearnedWordsSortOrder.fromString(prefs(context).getString(KEY_LEARNED_WORDS_SORT_ORDER, null))
+
+    fun setLearnedWordsSortOrder(context: Context, order: LearnedWordsSortOrder) {
+        prefs(context).edit().putString(KEY_LEARNED_WORDS_SORT_ORDER, order.name).apply()
+    }
 
     fun save(context: Context, key: String, value: String) {
         prefs(context).edit().putString(key, value).apply()

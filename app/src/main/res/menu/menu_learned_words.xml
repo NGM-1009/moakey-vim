@@ -3,6 +3,28 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/menu_sort"
+        android:title="@string/settings_learned_words_sort_count_desc"
+        app:showAsAction="never">
+        <menu>
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/menu_sort_count_desc"
+                    android:title="@string/settings_learned_words_sort_count_desc" />
+                <item
+                    android:id="@+id/menu_sort_count_asc"
+                    android:title="@string/settings_learned_words_sort_count_asc" />
+                <item
+                    android:id="@+id/menu_sort_word_asc"
+                    android:title="@string/settings_learned_words_sort_word_asc" />
+                <item
+                    android:id="@+id/menu_sort_word_desc"
+                    android:title="@string/settings_learned_words_sort_word_desc" />
+            </group>
+        </menu>
+    </item>
+
+    <item
         android:id="@+id/menu_prune_30"
         android:title="@string/settings_learned_words_prune_30"
         app:showAsAction="never" />

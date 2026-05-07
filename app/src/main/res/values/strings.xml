@@ -312,6 +312,14 @@
     <string name="settings_learned_words_prune_confirm">최근 30일 동안 사용하지 않은 단어를 삭제할까요?</string>
     <string name="settings_learned_words_prune_result">%d개 단어를 정리했어요</string>
     <string name="settings_learned_words_prune_none">정리할 단어가 없어요</string>
+    <string name="settings_learned_words_search_hint">검색</string>
+    <string name="settings_learned_words_count">총 %1$d개 (표시 %2$d개)</string>
+    <string name="settings_learned_words_count_all">총 %1$d개</string>
+    <string name="settings_learned_words_search_empty">검색 결과가 없어요</string>
+    <string name="settings_learned_words_sort_count_desc">빈도 높은 순</string>
+    <string name="settings_learned_words_sort_count_asc">빈도 낮은 순</string>
+    <string name="settings_learned_words_sort_word_asc">가나다순</string>
+    <string name="settings_learned_words_sort_word_desc">가나다 역순</string>
     <string name="settings_lang_label_ko">한</string>
     <string name="settings_lang_label_en">영</string>
     <string name="suggestion_long_click_remove">이 단어 삭제</string>

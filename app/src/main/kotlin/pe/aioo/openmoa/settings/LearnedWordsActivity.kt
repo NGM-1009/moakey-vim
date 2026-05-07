@@ -1,41 +1,56 @@
 package pe.aioo.openmoa.settings
 
-import android.graphics.drawable.Drawable
 import android.os.Bundle
-import android.view.Gravity
+import android.os.Handler
+import android.os.Looper
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
-import android.widget.LinearLayout
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.widget.addTextChangedListener
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import org.koin.android.ext.android.get
 import org.koin.core.qualifier.named
 import pe.aioo.openmoa.R
 import pe.aioo.openmoa.databinding.ActivityLearnedWordsBinding
+import pe.aioo.openmoa.settings.learnedwords.LearnedWordItem
+import pe.aioo.openmoa.settings.learnedwords.LearnedWordsSortOrder
+import pe.aioo.openmoa.settings.learnedwords.LearnedWordsAdapter
+import pe.aioo.openmoa.settings.learnedwords.filterByQuery
+import pe.aioo.openmoa.settings.learnedwords.sortedByOrder
 import pe.aioo.openmoa.suggestion.UserWordStore
 import pe.aioo.openmoa.suggestion.WordTokenizer
-import pe.aioo.openmoa.settings.SettingsPreferences
 
 class LearnedWordsActivity : AppCompatActivity() {
 
     private enum class Tab { KO, EN, BLACKLIST }
 
+    private companion object {
+        const val PAGE_SIZE = 50
+        const val SEARCH_DEBOUNCE_MS = 200L
+        const val KEY_TAB = "tab"
+        const val KEY_SEARCH = "search"
+        const val KEY_VISIBLE_SIZE = "visible_size"
+    }
+
     private lateinit var binding: ActivityLearnedWordsBinding
     private lateinit var koStore: UserWordStore
     private lateinit var enStore: UserWordStore
-    private var currentTab = Tab.KO
+    private lateinit var adapter: LearnedWordsAdapter
 
-    private val dp16 by lazy { (16 * resources.displayMetrics.density).toInt() }
-    private val dp8 by lazy { (8 * resources.displayMetrics.density).toInt() }
-    private val selectableBackground: Drawable? by lazy {
-        val ta = obtainStyledAttributes(intArrayOf(android.R.attr.selectableItemBackground))
-        try { ta.getDrawable(0) } finally { ta.recycle() }
-    }
+    private var currentTab = Tab.KO
+    private var sortOrder = LearnedWordsSortOrder.DEFAULT
+    private var masterList: List<LearnedWordItem> = emptyList()
+    private var filteredList: List<LearnedWordItem> = emptyList()
+    private var visibleSize = PAGE_SIZE
+
+    private val searchHandler = Handler(Looper.getMainLooper())
+    private val searchRunnable = Runnable { applyFilter() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,11 +60,26 @@ class LearnedWordsActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         koStore = get(named("ko"))
         enStore = get(named("en"))
-        binding.tabKoButton.setOnClickListener { switchTab(Tab.KO) }
-        binding.tabEnButton.setOnClickListener { switchTab(Tab.EN) }
-        binding.tabBlacklistButton.setOnClickListener { switchTab(Tab.BLACKLIST) }
+        sortOrder = SettingsPreferences.getLearnedWordsSortOrder(this)
+
+        setupAdapter()
+        setupRecyclerView()
+        setupSearchInput()
         binding.addButton.setOnClickListener { showAddWordDialog() }
-        refreshList()
+
+        if (savedInstanceState != null) {
+            currentTab = Tab.valueOf(savedInstanceState.getString(KEY_TAB, Tab.KO.name))
+            binding.searchInput.setText(savedInstanceState.getString(KEY_SEARCH, ""))
+            visibleSize = savedInstanceState.getInt(KEY_VISIBLE_SIZE, PAGE_SIZE)
+        }
+        setupTabButtons()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString(KEY_TAB, currentTab.name)
+        outState.putString(KEY_SEARCH, binding.searchInput.text?.toString() ?: "")
+        outState.putInt(KEY_VISIBLE_SIZE, visibleSize)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -61,6 +91,8 @@ class LearnedWordsActivity : AppCompatActivity() {
         val isWordTab = currentTab != Tab.BLACKLIST
         menu.findItem(R.id.menu_delete_all)?.isVisible = isWordTab
         menu.findItem(R.id.menu_prune_30)?.isVisible = isWordTab
+        menu.findItem(R.id.menu_sort)?.isVisible = isWordTab
+        applySortCheck(menu)
         return super.onPrepareOptionsMenu(menu)
     }
 
@@ -68,8 +100,17 @@ class LearnedWordsActivity : AppCompatActivity() {
         when (item.itemId) {
             R.id.menu_delete_all -> { showDeleteAllConfirm(); return true }
             R.id.menu_prune_30 -> { showPruneConfirm(); return true }
+            R.id.menu_sort_count_desc -> { setSortOrder(LearnedWordsSortOrder.COUNT_DESC); return true }
+            R.id.menu_sort_count_asc -> { setSortOrder(LearnedWordsSortOrder.COUNT_ASC); return true }
+            R.id.menu_sort_word_asc -> { setSortOrder(LearnedWordsSortOrder.WORD_ASC); return true }
+            R.id.menu_sort_word_desc -> { setSortOrder(LearnedWordsSortOrder.WORD_DESC); return true }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    override fun onDestroy() {
+        searchHandler.removeCallbacks(searchRunnable)
+        super.onDestroy()
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -77,101 +118,132 @@ class LearnedWordsActivity : AppCompatActivity() {
         return true
     }
 
+    private fun applySortCheck(menu: Menu) {
+        val checked = when (sortOrder) {
+            LearnedWordsSortOrder.COUNT_DESC -> R.id.menu_sort_count_desc
+            LearnedWordsSortOrder.COUNT_ASC -> R.id.menu_sort_count_asc
+            LearnedWordsSortOrder.WORD_ASC -> R.id.menu_sort_word_asc
+            LearnedWordsSortOrder.WORD_DESC -> R.id.menu_sort_word_desc
+        }
+        menu.findItem(checked)?.isChecked = true
+    }
+
+    private fun setSortOrder(order: LearnedWordsSortOrder) {
+        sortOrder = order
+        SettingsPreferences.setLearnedWordsSortOrder(this, order)
+        visibleSize = PAGE_SIZE
+        refreshMasterList()
+        invalidateOptionsMenu()
+    }
+
+    private fun setupAdapter() {
+        adapter = LearnedWordsAdapter(
+            onWordClick = { item -> showActionDialog(item.word) },
+            onWordDelete = { item -> showDeleteConfirm(item.word) },
+            onBlacklistRelease = { item -> showBlacklistReleaseConfirm(item.word, item.isEn) },
+        )
+    }
+
+    private fun setupRecyclerView() {
+        val layoutManager = LinearLayoutManager(this)
+        binding.wordRecyclerView.layoutManager = layoutManager
+        binding.wordRecyclerView.adapter = adapter
+        binding.wordRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                val lastVisible = layoutManager.findLastVisibleItemPosition()
+                if (lastVisible >= adapter.currentList.size - 10 && visibleSize < filteredList.size) {
+                    visibleSize += PAGE_SIZE
+                    submitVisible()
+                }
+            }
+        })
+    }
+
+    private fun setupSearchInput() {
+        binding.searchInput.addTextChangedListener {
+            searchHandler.removeCallbacks(searchRunnable)
+            searchHandler.postDelayed(searchRunnable, SEARCH_DEBOUNCE_MS)
+        }
+    }
+
+    private fun setupTabButtons() {
+        val checkId = when (currentTab) {
+            Tab.EN -> R.id.tabEnButton
+            Tab.BLACKLIST -> R.id.tabBlacklistButton
+            Tab.KO -> R.id.tabKoButton
+        }
+        binding.tabToggleGroup.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (!isChecked) return@addOnButtonCheckedListener
+            switchTab(when (checkedId) {
+                R.id.tabEnButton -> Tab.EN
+                R.id.tabBlacklistButton -> Tab.BLACKLIST
+                else -> Tab.KO
+            })
+        }
+        binding.tabToggleGroup.check(checkId)
+    }
+
     private fun switchTab(tab: Tab) {
         currentTab = tab
         binding.addButton.visibility = if (tab == Tab.BLACKLIST) View.GONE else View.VISIBLE
+        binding.searchLayout.visibility = View.VISIBLE
+        visibleSize = PAGE_SIZE
         invalidateOptionsMenu()
-        refreshList()
+        refreshMasterList()
     }
 
-    private fun refreshList() {
-        when (currentTab) {
-            Tab.KO -> refreshWordList(koStore)
-            Tab.EN -> refreshWordList(enStore)
-            Tab.BLACKLIST -> refreshBlacklist()
+    private fun refreshMasterList() {
+        masterList = when (currentTab) {
+            Tab.KO -> buildWordItems(koStore)
+            Tab.EN -> buildWordItems(enStore)
+            Tab.BLACKLIST -> buildBlacklistItems()
         }
+        applyFilter()
     }
 
-    private fun refreshWordList(store: UserWordStore) {
-        val entries = store.entries().sortedByDescending { it.second }
-        clearWordViews()
-        binding.emptyText.text = getString(R.string.settings_learned_words_empty)
-        binding.emptyText.visibility = if (entries.isEmpty()) View.VISIBLE else View.GONE
-        entries.forEach { (word, count) -> binding.wordListContainer.addView(createWordView(word, count)) }
+    private fun buildWordItems(store: UserWordStore): List<LearnedWordItem> =
+        store.entries()
+            .sortedByOrder(sortOrder)
+            .map { (word, count) -> LearnedWordItem.Word(word, count) }
+
+    private fun buildBlacklistItems(): List<LearnedWordItem> {
+        val ko = koStore.blacklist().sorted().map { LearnedWordItem.Blacklist(it, false) }
+        val en = enStore.blacklist().sorted().map { LearnedWordItem.Blacklist(it, true) }
+        return ko + en
     }
 
-    private fun refreshBlacklist() {
-        val koBlacklist = koStore.blacklist().sorted().map { it to false }
-        val enBlacklist = enStore.blacklist().sorted().map { it to true }
-        val combined = koBlacklist + enBlacklist
-        clearWordViews()
-        binding.emptyText.text = getString(R.string.settings_learned_words_blacklist_empty)
-        binding.emptyText.visibility = if (combined.isEmpty()) View.VISIBLE else View.GONE
-        combined.forEach { (word, isEn) -> binding.wordListContainer.addView(createBlacklistWordView(word, isEn)) }
+    private fun applyFilter() {
+        val query = binding.searchInput.text?.toString() ?: ""
+        filteredList = masterList.filterByQuery(query)
+        submitVisible()
     }
 
-    private fun clearWordViews() {
-        val container = binding.wordListContainer
-        for (i in container.childCount - 1 downTo 0) {
-            val child = container.getChildAt(i)
-            if (child.id != R.id.emptyText) container.removeViewAt(i)
-        }
-    }
+    private fun submitVisible() {
+        val filtered = filteredList
+        val visible = filtered.take(visibleSize)
+        adapter.submitList(visible)
 
-    private fun buildRowLayout(onClick: () -> Unit): LinearLayout =
-        LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(0, dp16, 0, dp16)
-            background = selectableBackground
-            isClickable = true
-            isFocusable = true
-            setOnClickListener { onClick() }
+        val isEmpty = filtered.isEmpty()
+        binding.wordRecyclerView.visibility = if (isEmpty) View.GONE else View.VISIBLE
+        binding.emptyText.visibility = if (isEmpty) View.VISIBLE else View.GONE
+        binding.emptyText.text = when {
+            masterList.isEmpty() -> getString(
+                if (currentTab == Tab.BLACKLIST) R.string.settings_learned_words_blacklist_empty
+                else R.string.settings_learned_words_empty
+            )
+            else -> getString(R.string.settings_learned_words_search_empty)
         }
 
-    private fun createWordView(word: String, count: Int): View {
-        val row = buildRowLayout { showActionDialog(word) }
-        row.addView(TextView(this).apply {
-            text = word
-            textSize = 15f
-            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-        })
-        row.addView(TextView(this).apply {
-            text = count.toString()
-            textSize = 14f
-            setTextColor(context.getColor(android.R.color.darker_gray))
-            setPadding(dp8, 0, dp8, 0)
-        })
-        row.addView(TextView(this).apply {
-            text = getString(R.string.settings_hotstring_delete)
-            textSize = 14f
-            setPadding(dp8, 0, 0, 0)
-            setOnClickListener { showDeleteConfirm(word) }
-        })
-        return row
-    }
-
-    private fun createBlacklistWordView(word: String, isEn: Boolean): View {
-        val langLabel = getString(if (isEn) R.string.settings_lang_label_en else R.string.settings_lang_label_ko)
-        val row = buildRowLayout { showBlacklistReleaseConfirm(word, isEn) }
-        row.addView(TextView(this).apply {
-            text = word
-            textSize = 15f
-            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-        })
-        row.addView(TextView(this).apply {
-            text = langLabel
-            textSize = 12f
-            setTextColor(context.getColor(android.R.color.darker_gray))
-            setPadding(dp8, 0, dp8, 0)
-        })
-        row.addView(TextView(this).apply {
-            text = getString(R.string.settings_learned_words_blacklist_release)
-            textSize = 14f
-            setPadding(dp8, 0, 0, 0)
-            setOnClickListener { showBlacklistReleaseConfirm(word, isEn) }
-        })
-        return row
+        if (isEmpty || currentTab == Tab.BLACKLIST) {
+            binding.countText.visibility = View.GONE
+        } else {
+            binding.countText.visibility = View.VISIBLE
+            binding.countText.text = if (filtered.size == masterList.size) {
+                getString(R.string.settings_learned_words_count_all, masterList.size)
+            } else {
+                getString(R.string.settings_learned_words_count, masterList.size, filtered.size)
+            }
+        }
     }
 
     private fun showActionDialog(word: String) {
@@ -188,8 +260,8 @@ class LearnedWordsActivity : AppCompatActivity() {
             .setTitle(word)
             .setItems(items) { _, which ->
                 when (which) {
-                    0 -> { store.remove(word); refreshList() }
-                    1 -> { store.addToBlacklist(word); refreshList() }
+                    0 -> { store.remove(word); refreshMasterList() }
+                    1 -> { store.addToBlacklist(word); refreshMasterList() }
                 }
             }
             .show()
@@ -205,7 +277,7 @@ class LearnedWordsActivity : AppCompatActivity() {
             .setMessage(getString(R.string.settings_learned_words_delete_confirm, word))
             .setPositiveButton(R.string.dialog_confirm) { _, _ ->
                 store.remove(word)
-                refreshList()
+                refreshMasterList()
             }
             .setNegativeButton(R.string.settings_qwerty_long_key_cancel, null)
             .show()
@@ -222,7 +294,7 @@ class LearnedWordsActivity : AppCompatActivity() {
             .setMessage(getString(R.string.settings_learned_words_delete_all_confirm) + " ($count)")
             .setPositiveButton(R.string.dialog_confirm) { _, _ ->
                 store.clear()
-                refreshList()
+                refreshMasterList()
             }
             .setNegativeButton(R.string.settings_qwerty_long_key_cancel, null)
             .show()
@@ -235,6 +307,7 @@ class LearnedWordsActivity : AppCompatActivity() {
             if (isKo) R.string.settings_learned_words_add_hint_ko
             else R.string.settings_learned_words_add_hint_en
         )
+        val dp16 = (16 * resources.displayMetrics.density).toInt()
         val input = EditText(this).apply {
             this.hint = hint
             setSingleLine()
@@ -263,7 +336,7 @@ class LearnedWordsActivity : AppCompatActivity() {
                         val minCount = SettingsPreferences.getMinLearnCount(this@LearnedWordsActivity)
                         store.importWords(mapOf(word to minCount))
                         dialog.dismiss()
-                        refreshList()
+                        refreshMasterList()
                     }
                 }
             }
@@ -287,7 +360,7 @@ class LearnedWordsActivity : AppCompatActivity() {
                     getString(R.string.settings_learned_words_prune_none)
                 }
                 Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
-                if (removed > 0) refreshList()
+                if (removed > 0) refreshMasterList()
             }
             .setNegativeButton(R.string.settings_qwerty_long_key_cancel, null)
             .show()
@@ -299,7 +372,7 @@ class LearnedWordsActivity : AppCompatActivity() {
             .setMessage(getString(R.string.settings_learned_words_blacklist_release_confirm, word))
             .setPositiveButton(R.string.settings_learned_words_blacklist_release) { _, _ ->
                 store.removeFromBlacklist(word)
-                refreshBlacklist()
+                refreshMasterList()
             }
             .setNegativeButton(R.string.settings_qwerty_long_key_cancel, null)
             .show()
