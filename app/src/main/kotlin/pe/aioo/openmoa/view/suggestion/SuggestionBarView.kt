@@ -21,6 +21,7 @@ import android.widget.TextView
 import pe.aioo.openmoa.R
 import pe.aioo.openmoa.settings.SettingsPreferences
 import pe.aioo.openmoa.util.TextWidthClassifier
+import pe.aioo.openmoa.util.stripUrlPrefix
 import pe.aioo.openmoa.view.skin.SkinApplier
 
 class SuggestionBarView @JvmOverloads constructor(
@@ -131,14 +132,16 @@ class SuggestionBarView @JvmOverloads constructor(
         leftActions.visibility = VISIBLE
         rightActions.visibility = VISIBLE
         val isOneHand = SettingsPreferences.getOneHandMode(context).isReduced
-        val isWide = TextWidthClassifier.isWideGlyphText(text)
+        val displayText = stripUrlPrefix(text)
+        // displayText 기준으로 판정 — 표시 길이는 URL 프리픽스 제거 후 텍스트 기준이어야 함
+        val isWide = TextWidthClassifier.isWideGlyphText(displayText)
         val maxLen = when {
             isWide && isOneHand -> MAX_CLIPBOARD_LEN_WIDE_ONE_HAND
             isWide -> MAX_CLIPBOARD_LEN_WIDE
             isOneHand -> MAX_CLIPBOARD_LEN_NARROW_ONE_HAND
             else -> MAX_CLIPBOARD_LEN_NARROW
         }
-        val preview = if (text.length > maxLen) text.take(maxLen) + "…" else text
+        val preview = if (displayText.length > maxLen) displayText.take(maxLen) + "…" else displayText
         container.addView(buildClipboardChip(preview, text, onPaste))
     }
 
