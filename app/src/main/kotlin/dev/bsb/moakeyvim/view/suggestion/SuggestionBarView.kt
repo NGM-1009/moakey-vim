@@ -207,7 +207,7 @@ class SuggestionBarView @JvmOverloads constructor(
 
     private fun buildWordView(word: String, isHotstring: Boolean, wordColor: Int): TextView {
         return TextView(context).apply {
-            text = word
+            text = word.trim()
             textSize = TEXT_SIZE_SP
             setTextColor(wordColor)
             setPadding(hPad, vPad, hPad, vPad)
