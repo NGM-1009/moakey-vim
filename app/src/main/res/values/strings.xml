@@ -113,7 +113,8 @@
     <string name="settings_input_mode_qwerty">두벌식</string>
     <string name="settings_input_mode_qwerty_simple">두벌식 단모음</string>
     <string name="settings_landscape_qwerty_title">가로 모드 두벌식</string>
-    <string name="settings_landscape_qwerty_description">가로 모드일 때 한글 자판을 쿼티로 표시합니다</string>
+    <string name="settings_landscape_ko_layout_title">가로 모드 입력 방식</string>
+    <string name="settings_landscape_ko_layout_none">세로와 동일(기본)</string>
 
     <string name="settings_keyboard_section">키보드 외형</string>
     <string name="settings_keypad_height_title">키패드 높이 조절</string>

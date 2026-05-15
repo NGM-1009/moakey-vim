@@ -330,7 +330,7 @@ class OpenMoaView : ConstraintLayout, KoinComponent {
                 CrossKeyTouchListener(
                     context,
                     listOf(
-                        StringKeyMessage("ᆢ"),
+                        StringKeyMessage("ㆍ"),
                         StringKeyMessage("ㅡ"),
                         StringKeyMessage("ㆍ"),
                         StringKeyMessage("ㅣ"),

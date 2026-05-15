@@ -28,6 +28,7 @@ import dev.bsb.moakeyvim.hotstring.HotstringRule
 import dev.bsb.moakeyvim.hotstring.HotstringRepository
 import dev.bsb.moakeyvim.config.EnterLongPressAction
 import dev.bsb.moakeyvim.config.HangulInputMode
+import dev.bsb.moakeyvim.config.LandscapeKoLayout
 import dev.bsb.moakeyvim.config.HapticStrength
 import dev.bsb.moakeyvim.config.KeyboardSkin
 import dev.bsb.moakeyvim.config.KeypadHeight
@@ -62,7 +63,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
             SettingsPreferences.KEY_WORD_SUGGESTION_ENABLED,
             SettingsPreferences.KEY_KOREAN_WORD_SUGGESTION_ENABLED,
             SettingsPreferences.KEY_CLIPBOARD_ENABLED,
-            SettingsPreferences.KEY_LANDSCAPE_QWERTY,
             SettingsPreferences.KEY_FLOATING_INDICATOR_ENABLED,
             SettingsPreferences.KEY_OVERLAY_PERMISSION_NOTIFIED,
             SettingsPreferences.KEY_HW_CAPSLOCK_TO_CTRL,
@@ -124,6 +124,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
         setupClipboardListPreferences()
         pref<ListPreference>(SettingsPreferences.KEY_HANGUL_INPUT_MODE)
             ?.setupEnum(HangulInputMode.values(), { it.labelResId }, HangulInputMode.TWO_HAND_MOAKEY)
+        pref<ListPreference>(SettingsPreferences.KEY_LANDSCAPE_KO_LAYOUT)
+            ?.setupEnum(LandscapeKoLayout.values(), { it.labelResId }, LandscapeKoLayout.NONE)
         pref<ListPreference>(SettingsPreferences.KEY_KEYBOARD_SKIN)
             ?.setupEnum(KeyboardSkin.values(), { it.labelResId }, KeyboardSkin.WHITE)
         pref<ListPreference>(SettingsPreferences.KEY_KEYPAD_HEIGHT)

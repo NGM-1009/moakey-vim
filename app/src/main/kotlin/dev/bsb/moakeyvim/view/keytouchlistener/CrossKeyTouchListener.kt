@@ -8,7 +8,27 @@ import dev.bsb.moakeyvim.view.message.StringKeyMessage
 import dev.bsb.moakeyvim.view.preview.KeyPreviewController
 import kotlin.math.*
 
-// keyList 순서: [0]=위/왼, [1]=오른쪽, [2]=기본(탭), [3]=왼쪽/아래
+// keyList 순서: [0]=위, [1]=오른쪽, [2]=기본(탭/아래), [3]=왼쪽
+internal fun resolveKeyFromGesture(
+    startX: Float,
+    startY: Float,
+    currentX: Float,
+    currentY: Float,
+    gestureThreshold: Float,
+    keyList: List<StringKeyMessage>,
+): StringKeyMessage {
+    require(keyList.size == 4) { "keyList must have exactly 4 entries: [up, right, center, left]" }
+    val distance = sqrt((currentX - startX).pow(2) + (currentY - startY).pow(2))
+    if (distance <= gestureThreshold) return keyList[2]
+    val degree = ((atan2(currentY - startY, currentX - startX) * 180.0) / PI).toFloat()
+    // atan2 범위: (-180, 180]. abs >= 135도 = 왼쪽(keyList[3])
+    return when {
+        abs(degree) < 45f -> keyList[1]
+        abs(degree) < 135f -> if (degree > 0) keyList[2] else keyList[0]
+        else -> keyList[3]
+    }
+}
+
 class CrossKeyTouchListener(
     context: Context,
     private val keyList: List<StringKeyMessage>,
@@ -18,16 +38,8 @@ class CrossKeyTouchListener(
     private var startX: Float = 0f
     private var startY: Float = 0f
 
-    private fun resolveKey(currentX: Float, currentY: Float): StringKeyMessage {
-        val distance = sqrt((currentX - startX).pow(2) + (currentY - startY).pow(2))
-        if (distance <= config.gestureThreshold) return keyList[2]
-        val degree = (atan2(currentY - startY, currentX - startX) * 180f) / PI
-        return when {
-            abs(degree) < 45f -> keyList[1]
-            abs(degree) < 135f -> if (degree > 0) keyList[2] else keyList[0]
-            else -> keyList[3]
-        }
-    }
+    private fun resolveKey(currentX: Float, currentY: Float): StringKeyMessage =
+        resolveKeyFromGesture(startX, startY, currentX, currentY, config.gestureThreshold, keyList)
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouch(view: View, motionEvent: MotionEvent): Boolean {

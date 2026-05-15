@@ -5,6 +5,7 @@ import dev.bsb.moakeyvim.config.EnterLongPressAction
 import dev.bsb.moakeyvim.config.GestureAnglePreset
 import dev.bsb.moakeyvim.config.GestureAngles
 import dev.bsb.moakeyvim.config.HangulInputMode
+import dev.bsb.moakeyvim.config.LandscapeKoLayout
 import dev.bsb.moakeyvim.config.HapticStrength
 import dev.bsb.moakeyvim.config.KeyboardSkin
 import dev.bsb.moakeyvim.config.SoundType
@@ -45,6 +46,7 @@ object SettingsPreferences {
     const val KEY_CLIPBOARD_EXPIRY_MINUTES = "clipboard_expiry_minutes"
     const val KEY_MIN_LEARN_COUNT = "min_learn_count"
     const val KEY_LANDSCAPE_QWERTY = "landscape_qwerty"
+    const val KEY_LANDSCAPE_KO_LAYOUT = "landscape_ko_layout"
     const val KEY_FLOATING_INDICATOR_ENABLED = "floating_indicator_enabled"
     const val KEY_FLOATING_INDICATOR_X = "floating_indicator_x"
     const val KEY_FLOATING_INDICATOR_Y = "floating_indicator_y"
@@ -79,6 +81,7 @@ object SettingsPreferences {
         KEY_CLIPBOARD_EXPIRY_MINUTES,
         KEY_MIN_LEARN_COUNT,
         KEY_LANDSCAPE_QWERTY,
+        KEY_LANDSCAPE_KO_LAYOUT,
         KEY_FLOATING_INDICATOR_ENABLED,
         KEY_FLOATING_INDICATOR_X,
         KEY_FLOATING_INDICATOR_Y,
@@ -197,9 +200,21 @@ object SettingsPreferences {
         prefs(context).edit().putBoolean(KEY_CLIPBOARD_ENABLED, enabled).apply()
     }
 
-    fun getLandscapeQwerty(context: Context): Boolean =
-        prefs(context).getBoolean(KEY_LANDSCAPE_QWERTY, false)
+    fun getLandscapeKoLayout(context: Context): LandscapeKoLayout {
+        val p = prefs(context)
+        val saved = p.getString(KEY_LANDSCAPE_KO_LAYOUT, null)
+        if (saved != null) return LandscapeKoLayout.fromString(saved)
+        // 기존 boolean 설정 마이그레이션
+        return if (p.getBoolean(KEY_LANDSCAPE_QWERTY, false)) {
+            LandscapeKoLayout.QWERTY
+        } else {
+            LandscapeKoLayout.NONE
+        }
+    }
 
+    fun getLandscapeQwerty(context: Context): Boolean = getLandscapeKoLayout(context).isQwerty
+
+    @Deprecated("Use getLandscapeKoLayout() instead", ReplaceWith("getLandscapeKoLayout(context)"))
     fun setLandscapeQwerty(context: Context, enabled: Boolean) {
         prefs(context).edit().putBoolean(KEY_LANDSCAPE_QWERTY, enabled).apply()
     }

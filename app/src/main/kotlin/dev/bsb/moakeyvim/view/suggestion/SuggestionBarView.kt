@@ -122,7 +122,11 @@ class SuggestionBarView @JvmOverloads constructor(
         val showFunctionKeys = words.isEmpty()
         leftActions.visibility = if (showFunctionKeys) VISIBLE else GONE
         rightActions.visibility = if (showFunctionKeys) VISIBLE else GONE
-        words.forEach { word -> container.addView(buildWordView(word, word in hotstringExpansions)) }
+        if (words.isNotEmpty()) {
+            val skin = SettingsPreferences.getKeyboardSkin(context)
+            val wordColor = dimTextColor(SkinApplier.fgColor(context, skin))
+            words.forEach { word -> container.addView(buildWordView(word, word in hotstringExpansions, wordColor)) }
+        }
     }
 
     fun showClipboard(text: String, onPaste: (String) -> Unit) {
@@ -171,12 +175,14 @@ class SuggestionBarView @JvmOverloads constructor(
         scrollView.scrollTo(0, 0)
         leftActions.visibility = VISIBLE
         rightActions.visibility = VISIBLE
-        container.addView(buildActionView(context.getString(R.string.key_cut), onCut))
-        container.addView(buildActionView(context.getString(R.string.key_copy), onCopy))
+        val skin = SettingsPreferences.getKeyboardSkin(context)
+        val actionColor = dimTextColor(SkinApplier.fgColor(context, skin))
+        container.addView(buildActionView(context.getString(R.string.key_cut), onCut, actionColor))
+        container.addView(buildActionView(context.getString(R.string.key_copy), onCopy, actionColor))
     }
 
     fun applyColors(textColor: Int, bgColor: Int, keyBgColor: Int = Color.WHITE) {
-        currentTextColor = textColor
+        currentTextColor = dimTextColor(textColor)
         currentBgColor = bgColor
         currentKeyBgColor = keyBgColor
         setBackgroundColor(bgColor)
@@ -193,17 +199,17 @@ class SuggestionBarView @JvmOverloads constructor(
                     (child.getChildAt(1) as? TextView)?.setTextColor(textColor)
                     child.background = buildChipBackground()
                 }
-                child is TextView -> child.setTextColor(textColor)
+                child is TextView -> child.setTextColor(currentTextColor)
                 child is ImageButton -> child.imageTintList = tintList
             }
         }
     }
 
-    private fun buildWordView(word: String, isHotstring: Boolean): TextView {
+    private fun buildWordView(word: String, isHotstring: Boolean, wordColor: Int): TextView {
         return TextView(context).apply {
-            text = word
+            text = word.trim()
             textSize = TEXT_SIZE_SP
-            setTextColor(currentTextColor)
+            setTextColor(wordColor)
             setPadding(hPad, vPad, hPad, vPad)
             gravity = Gravity.CENTER
             isClickable = true
@@ -271,11 +277,11 @@ class SuggestionBarView @JvmOverloads constructor(
         return buildIconButton(R.drawable.ic_content_paste) { onOpenClipboardPanel?.invoke() }
     }
 
-    private fun buildActionView(label: String, action: () -> Unit): TextView {
+    private fun buildActionView(label: String, action: () -> Unit, actionColor: Int): TextView {
         return TextView(context).apply {
             text = label
             textSize = TEXT_SIZE_SP
-            setTextColor(currentTextColor)
+            setTextColor(actionColor)
             setPadding(hPad, vPad, hPad, vPad)
             gravity = Gravity.CENTER
             isClickable = true
@@ -334,6 +340,13 @@ class SuggestionBarView @JvmOverloads constructor(
                 setOnClickListener { onClick() }
             }
         }
+    }
+
+    private fun dimTextColor(color: Int): Int {
+        val hsv = FloatArray(3)
+        Color.colorToHSV(color, hsv)
+        hsv[2] *= 0.88f
+        return Color.HSVToColor(hsv)
     }
 
     private fun buildRipple(): RippleDrawable {

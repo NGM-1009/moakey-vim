@@ -1135,8 +1135,9 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
             return KoLayout(useQwerty = true, simpleQwerty = savedMode.isSimpleQwerty)
         }
         val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-        if (isLandscape && SettingsPreferences.getLandscapeQwerty(this)) {
-            return KoLayout(useQwerty = true, simpleQwerty = false)
+        val landscapeLayout = SettingsPreferences.getLandscapeKoLayout(this)
+        if (isLandscape && landscapeLayout.isQwerty) {
+            return KoLayout(useQwerty = true, simpleQwerty = landscapeLayout.isSimple)
         }
         return KoLayout(useQwerty = false, simpleQwerty = false)
     }
