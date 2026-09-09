@@ -89,8 +89,9 @@ import kotlin.math.roundToInt
 class OpenMoaIME : InputMethodService(), KoinComponent {
 
     private lateinit var binding: OpenMoaImeBinding
-    // Bottom inset reserved for the Android IME navigation/keyboard-switcher area.
-    private var navigationBarInsetBottom = 0
+    // Bottom inset reserved by Android/HyperOS system UI below the IME.
+    private var systemBottomInset = 0
+    private var appliedSystemBottomInset = -1
     private lateinit var broadcastReceiver: BroadcastReceiver
     private lateinit var keyboardViews: Map<IMEMode, View>
     private val config: Config by inject()
@@ -624,15 +625,21 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
     override fun onCreate() {
         super.onCreate()
 
-        // Android 15(API 35)+ edge-to-edge: keep the IME content out of the
-        // system navigation area. This mirrors the platform InputMethodService
-        // window inset handling so the keyboard does not draw underneath the
-        // IME navigation bar / keyboard-switcher area.
+        // Android 16 / HyperOS: the area below an IME can be reported through
+        // navigationBars() and/or systemOverlays(). On Xiaomi/POCO devices the
+        // keyboard-switcher / gesture-line overlay is a system overlay, so
+        // navigationBars() alone is not sufficient.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             val imeWindow = window.window ?: return
             val layoutParams = imeWindow.attributes
             layoutParams.setFitInsetsTypes(
-                WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars()
+                WindowInsets.Type.statusBars() or
+                    WindowInsets.Type.navigationBars() or
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                        WindowInsets.Type.systemOverlays()
+                    } else {
+                        0
+                    }
             )
             layoutParams.setFitInsetsSides(
                 WindowInsets.Side.LEFT or
@@ -643,18 +650,23 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
             imeWindow.attributes = layoutParams
 
             imeWindow.decorView.setOnApplyWindowInsetsListener { view, insets ->
-                val navigationInsets = insets.getInsetsIgnoringVisibility(
+                val navigationBottom = insets.getInsetsIgnoringVisibility(
                     WindowInsets.Type.navigationBars()
-                )
-                navigationBarInsetBottom = navigationInsets.bottom
-                applyNavigationBarInsetToInputView()
+                ).bottom
+                val overlayBottom = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    insets.getInsetsIgnoringVisibility(
+                        WindowInsets.Type.systemOverlays()
+                    ).bottom
+                } else {
+                    0
+                }
+                // Use the largest actual bottom obstruction. This is intentionally
+                // based on system-reported pixels rather than a fixed dp value so it
+                // follows POCO/HyperOS gesture and keyboard-switcher dimensions.
+                systemBottomInset = maxOf(navigationBottom, overlayBottom)
+                applySystemBottomInsetToInputView()
 
-                // Keep the platform behavior: navigation bar insets are supplied
-                // even when the system navigation area is visually transparent.
-                val adjustedInsets = WindowInsets.Builder(insets)
-                    .setInsets(WindowInsets.Type.navigationBars(), navigationInsets)
-                    .build()
-                view.onApplyWindowInsets(adjustedInsets)
+                view.onApplyWindowInsets(insets)
             }
         }
         broadcastReceiver = object : BroadcastReceiver() {
@@ -1945,28 +1957,26 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
         }
     }
 
-    private fun applyNavigationBarInsetToInputView() {
+    private fun applySystemBottomInsetToInputView() {
         if (!this::binding.isInitialized) return
-
-        val bottom = navigationBarInsetBottom.coerceAtLeast(0)
-        if (binding.root.paddingBottom != bottom) {
-            binding.root.setPadding(
-                binding.root.paddingLeft,
-                binding.root.paddingTop,
-                binding.root.paddingRight,
-                bottom
-            )
-        }
+        if (appliedSystemBottomInset == systemBottomInset) return
+        appliedSystemBottomInset = systemBottomInset
+        applyKeyboardLayout()
     }
 
     private fun calculateKeyboardHeight(): Int {
         val displayHeight = resources.displayMetrics.heightPixels
         val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-        if (isLandscape) {
-            return (displayHeight * 0.50f).toInt()
+        val baseHeight = if (isLandscape) {
+            (displayHeight * 0.50f).toInt()
+        } else {
+            val heightScale = SettingsPreferences.getKeypadHeight(this).heightScale
+            (displayHeight * 0.35f * heightScale).toInt()
         }
-        val heightScale = SettingsPreferences.getKeypadHeight(this).heightScale
-        return (displayHeight * 0.35f * heightScale).toInt()
+
+        // The IME view itself must become shorter; padding alone does not move the
+        // final keyboard row above a HyperOS system overlay.
+        return (baseHeight - systemBottomInset.coerceAtLeast(0)).coerceAtLeast(1)
     }
 
     private fun getHeight(): Int {
