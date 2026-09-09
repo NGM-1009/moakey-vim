@@ -1979,11 +1979,18 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
 
         // ?⑤え??multi-tap ?⑹꽦: 媛숈? ?먮え ??踰????⑹꽦 ?먮え
         private val SIMPLE_MULTI_TAP_MAP = mapOf(
-            "?? to "??, "?? to "??, "?? to "??, "?? to "??,
-            "?? to "??, "?? to "??,
-            "?? to "??, "?? to "??, "?? to "??,
-            "?? to "??, "?? to "??,
-        )
+    "ㅏ" to "ㅑ",
+    "ㅓ" to "ㅕ",
+    "ㅗ" to "ㅛ",
+    "ㅜ" to "ㅠ",
+    "ㅐ" to "ㅒ",
+    "ㅔ" to "ㅖ",
+    "ㄱ" to "ㄲ",
+    "ㄷ" to "ㄸ",
+    "ㅂ" to "ㅃ",
+    "ㅅ" to "ㅆ",
+    "ㅈ" to "ㅉ",
+)
     }
 
 }
