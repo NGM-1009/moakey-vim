@@ -627,15 +627,15 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
         // window inset handling so the keyboard does not draw underneath the
         // IME navigation bar / keyboard-switcher area.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            val imeWindow = window.window
+            val imeWindow = window.window ?: return
             val layoutParams = imeWindow.attributes
             layoutParams.setFitInsetsTypes(
                 WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars()
             )
             layoutParams.setFitInsetsSides(
-                WindowManager.LayoutParams.SIDE_LEFT or
-                    WindowManager.LayoutParams.SIDE_TOP or
-                    WindowManager.LayoutParams.SIDE_RIGHT
+                WindowInsets.Side.LEFT or
+                    WindowInsets.Side.TOP or
+                    WindowInsets.Side.RIGHT
             )
             layoutParams.setFitInsetsIgnoringVisibility(true)
             imeWindow.attributes = layoutParams
