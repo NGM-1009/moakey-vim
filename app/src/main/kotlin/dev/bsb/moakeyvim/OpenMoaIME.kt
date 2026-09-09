@@ -1019,6 +1019,37 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
         }
     }
 
+    private fun installNavigationBarInsetsListener() {
+        val decorView = window.window?.decorView ?: return
+
+        ViewCompat.setOnApplyWindowInsetsListener(decorView) { _, insets ->
+            updateNavigationBarInsetBottom(insets)
+            insets
+        }
+
+        ViewCompat.requestApplyInsets(decorView)
+        decorView.post {
+            ViewCompat.getRootWindowInsets(decorView)?.let(::updateNavigationBarInsetBottom)
+        }
+    }
+
+    private fun updateNavigationBarInsetBottom(insets: WindowInsetsCompat) {
+        // Android 15(API 35)+ edge-to-edge can place the IME content behind
+        // the system navigation area. Use the largest relevant bottom inset
+        // so the keyboard itself stays above that system-controlled area.
+        val systemBarsBottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom
+        val navigationBarsBottom = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom
+        val tappableElementBottom = insets.getInsets(WindowInsetsCompat.Type.tappableElement()).bottom
+        val newInset = maxOf(systemBarsBottom, navigationBarsBottom, tappableElementBottom)
+
+        if (navigationBarInsetBottom == newInset) return
+        navigationBarInsetBottom = newInset
+
+        if (this::binding.isInitialized) {
+            applyKeyboardLayout()
+        }
+    }
+
     @SuppressLint("InflateParams")
     override fun onCreateInputView(): View {
         super.onCreateInputView()
@@ -1026,19 +1057,7 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
         keyboardViews = buildKeyboardViews()
         val view = layoutInflater.inflate(R.layout.open_moa_ime, null)
         binding = OpenMoaImeBinding.bind(view)
-
-        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
-            val newNavigationBarInsetBottom =
-                insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom
-
-            if (navigationBarInsetBottom != newNavigationBarInsetBottom) {
-                navigationBarInsetBottom = newNavigationBarInsetBottom
-                applyKeyboardLayout()
-            }
-
-            insets
-        }
-        ViewCompat.requestApplyInsets(binding.root)
+        installNavigationBarInsetsListener()
         binding.wordSuggestionBar.onPick = ::onSuggestionPicked
         binding.wordSuggestionBar.onWordLongClick = { word -> onSuggestionLongClick(word) }
         binding.wordSuggestionBar.onCursorLeft = {
@@ -1782,6 +1801,13 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
     override fun onWindowShown() {
         super.onWindowShown()
         hardwareKeyboardController.onWindowShown()
+        val decorView = window.window?.decorView
+        if (decorView != null) {
+            ViewCompat.requestApplyInsets(decorView)
+            decorView.post {
+                ViewCompat.getRootWindowInsets(decorView)?.let(::updateNavigationBarInsetBottom)
+            }
+        }
     }
 
     override fun onWindowHidden() {
@@ -1921,11 +1947,9 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
         val displayHeight = resources.displayMetrics.heightPixels
         val availableHeight = (displayHeight - navigationBarInsetBottom).coerceAtLeast(0)
         val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-
         if (isLandscape) {
             return (availableHeight * 0.50f).toInt()
         }
-
         val heightScale = SettingsPreferences.getKeypadHeight(this).heightScale
         return (availableHeight * 0.35f * heightScale).toInt()
     }
