@@ -124,8 +124,8 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
     }
 
     private val inputBindingPollHandler = Handler(Looper.getMainLooper())
-    // ?쇰? 湲곌린?먯꽌 BT ?ㅻ낫???곌껐 ?댁젣 ??onUnbindInput/onFinishInput???몄텧?섏? ?딆븘
-    // ?뚮줈???몃뵒耳?댄꽣媛 怨꾩냽 ?쒖떆?섎뒗 臾몄젣瑜?諛⑹뼱?섍린 ?꾪븳 ?대윭
+    // 일부 기기에서 BT 키보드 연결 해제 시 onUnbindInput/onFinishInput이 호출되지 않아
+    // 플로팅 인디케이터가 계속 표시되는 문제를 방어하기 위한 폴러
     private val inputBindingPollRunnable = object : Runnable {
         override fun run() {
             if (currentInputBinding == null || currentInputConnection == null) {
@@ -179,7 +179,7 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
                     binding.clipboardPanel.refresh(this)
                 }
             }
-            // onUpdateSelection蹂대떎 ?섏쨷???ㅽ뻾?섎룄濡??ㅼ쓬 ?ъ씠?대줈 誘몃８
+            // onUpdateSelection보다 나중에 실행되도록 다음 사이클로 미룸
             inputBindingPollHandler.post { refreshClipboardPreviewIfIdle() }
         }
     }
@@ -250,7 +250,7 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
         val capturedHotstringBuffer = hotstringBuffer
         val capturedUnresolved = if (isKoMode) hangulAssembler.getUnresolved() else null
         suggestionJob = serviceScope.launch {
-            // 泥??쒖꽦??????誘몃━蹂닿린 dismiss ?쒕젅???꾨즺 ???쒖떆
+            // 첫 활성화 시 키 미리보기 dismiss 딜레이 완료 후 표시
             if (config.keyPreviewEnabled && !isSuggestionBarActive) {
                 delay(250)
             }
@@ -265,12 +265,12 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
             val triggerToMatch = if (capturedIsKoMode) prefix else capturedHotstringBuffer
             val enabledRules = HotstringRepository.getCached(this@OpenMoaIME).filter { it.enabled }
 
-            // 1?쒖쐞: ?몃━嫄??뺥솗 留ㅼ묶
+            // 1순위: 트리거 정확 매칭
             val triggerMatched = enabledRules
                 .filter { it.trigger == triggerToMatch }
                 .map { it.expansion }
 
-            // 2?쒖쐞: ?뺤옣?닿? ?꾩옱 ?낅젰(prefix)?쇰줈 ?쒖옉?섎뒗 寃쎌슦
+            // 2순위: 확장어가 현재 입력(prefix)으로 시작하는 경우
             val syllablePrefix = if (capturedIsKoMode) {
                 KoreanPrefixExtractor.extract(prefix, capturedUnresolved).first
             } else {
@@ -297,9 +297,9 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
                         else -> 2
                     }
                 }
-                .map { it.expansion }  // ?먮낯 ?좎? (trailing space ?ы븿)
+                .map { it.expansion }  // 원본 유지 (trailing space 포함)
 
-            // trim 湲곗??쇰줈 以묐났 ?쒓굅?섎릺 ?먮낯 媛?蹂댁〈 ???먮룞 移섑솚 ?곗꽑
+            // trim 기준으로 중복 제거하되 원본 값 보존 — 자동 치환 우선
             val hotstringExpansions = (triggerMatched + expansionMatched).distinctBy { it.trim() }
             val hotstringTrimmedSet = hotstringExpansions.map { it.trim() }.toSet()
             val hotstringExpansionSet = hotstringExpansions.toSet()
@@ -385,7 +385,7 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
         }
     }
 
-    // Phase 1 + Idea A + Idea B: ?⑥뼱 而ㅻ컠 ???숈뒿 (Enter/Space/援щ몢??怨듯넻)
+    // Phase 1 + Idea A + Idea B: 단어 커밋 시 학습 (Enter/Space/구두점 공통)
     private fun learnComposingWordOnCommit() {
         if (isPasswordField || composingText.isEmpty()) return
         if (imeMode == IMEMode.IME_EN) {
@@ -394,7 +394,7 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
             lastLearnedWord = word
             lastLearnedIsKo = false
             serviceScope.launch {
-                // Backspace濡?undo?먯쑝硫?lastLearnedWord != word) ensureMinCount 嫄대꼫?
+                // Backspace로 undo됐으면(lastLearnedWord != word) ensureMinCount 건너뜀
                 if (suggestionEngine.containsInDictionary(word) && lastLearnedWord == word) {
                     userWordStore.ensureMinCount(word, config.minLearnCount)
                 }
@@ -406,7 +406,7 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
             lastLearnedWord = word
             lastLearnedIsKo = true
             serviceScope.launch {
-                // stem? ?ъ쟾 議고쉶?? ensureMinCount??word(議곗궗 ?ы븿 ?먰삎) ?ㅻ줈 ?듭씪
+                // stem은 사전 조회용, ensureMinCount는 word(조사 포함 원형) 키로 통일
                 val stem = WordTokenizer.extractKorean(capturedText)
                 if (stem != null && koreanSuggestionEngine.containsInDictionary(stem) && lastLearnedWord == word) {
                     koreanUserWordStore.ensureMinCount(word, config.minLearnCount)
@@ -415,7 +415,7 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
         }
     }
 
-    // Idea C: 而ㅼ꽌 ?대룞 ???ъ쟾???덈뒗 ?⑥뼱留??숈뒿
+    // Idea C: 커서 이동 시 사전에 있는 단어만 학습
     private fun learnComposingWordIfInDictionary() {
         if (isPasswordField || composingText.isEmpty()) return
         if (imeMode == IMEMode.IME_EN) {
@@ -430,7 +430,7 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
             val word = WordTokenizer.normalizeKorean(composingText) ?: return
             val capturedText = composingText
             serviceScope.launch {
-                // stem? ?ъ쟾 議고쉶?? increment/ensureMinCount??word(議곗궗 ?ы븿 ?먰삎) ?ㅻ줈 ?듭씪
+                // stem은 사전 조회용, increment/ensureMinCount는 word(조사 포함 원형) 키로 통일
                 val stem = WordTokenizer.extractKorean(capturedText) ?: word
                 if (koreanSuggestionEngine.containsInDictionary(stem)) {
                     koreanUserWordStore.increment(word)
@@ -636,7 +636,7 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
                 val beforeComposingText = composingText
                 when (key) {
                     is SpecialKey -> {
-                        // ?⑤え??multi-tap ?곹깭???먮え ???곗냽 ?낅젰?먯꽌留??섎?媛 ?덉쓬
+                        // 단모음 multi-tap 상태는 자모 키 연속 입력에서만 의미가 있음
                         resetSimpleMultiTap()
                         // Process for special key
                         when (key) {
@@ -871,7 +871,8 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
                             hotstringBuffer = (hotstringBuffer + key).takeLast(50)
                         } else if (key.matches(HangulAssembler.JAMO_REGEX)) {
                             // Process for Jamo key
-                            // ?⑤え??紐⑤뱶 multi-tap ?⑹꽦: 媛숈? ?먮え瑜??꾧퀎 ?쒓컙 ????踰??꾨Ⅴ硫?                            // 吏곸쟾 ?먮え瑜??⑹꽦 ?먮え濡?援먯껜 (?뚯젅 蹂댁〈)
+                            // 단모음 모드 multi-tap 합성: 같은 자모를 임계 시간 내 두 번 누르면
+                            // 직전 자모를 합성 자모로 교체 (음절 보존)
                             val now = SystemClock.uptimeMillis()
                             val withinThreshold = now - lastSimpleJamoTime <= SIMPLE_MULTI_TAP_MS
                             val combined = if (
@@ -1238,13 +1239,14 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
         val maxLen = HotstringMatcher.bufferLengthNeeded(rules)
         if (maxLen == 0) return false
 
-        // Chrome???몃씪???먮룞?꾩꽦? selectionStart(?ъ슜???낅젰 ?? ~ selectionEnd(?꾩꽦 ?띿뒪????瑜?        // ?좏깮 ?곹깭濡??쒖떆?쒕떎. ??寃쎌슦 getTextBeforeCursor媛 ?꾩꽦 ?띿뒪?멸퉴吏 ?ы븿??諛섑솚?섏뿬
-        // ?몃━嫄?留ㅼ묶???ㅽ뙣?섎?濡? selectionStart ?댁쟾 ?띿뒪?몃줈留?留ㅼ묶?쒕떎.
+        // Chrome의 인라인 자동완성은 selectionStart(사용자 입력 끝) ~ selectionEnd(완성 텍스트 끝)를
+        // 선택 상태로 표시한다. 이 경우 getTextBeforeCursor가 완성 텍스트까지 포함해 반환하여
+        // 트리거 매칭이 실패하므로, selectionStart 이전 텍스트로만 매칭한다.
         val et: ExtractedText? = ic.getExtractedText(ExtractedTextRequest(), 0)
         val selStart = et?.selectionStart ?: 0
         val selEnd = et?.selectionEnd ?: 0
         val etText = et?.text
-        // et.text媛 null?대㈃ ?좏깮 踰붿쐞瑜??좊ː?????놁쑝誘濡?0?쇰줈 泥섎━
+        // et.text가 null이면 선택 범위를 신뢰할 수 없으므로 0으로 처리
         val inlineCompletionLen = if (selEnd > selStart && etText != null) selEnd - selStart else 0
 
         val buffer = if (inlineCompletionLen > 0 && etText != null) {
@@ -1259,7 +1261,7 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
         ic.beginBatchEdit()
         try {
             if (inlineCompletionLen > 0) {
-                // 而ㅼ꽌媛 selStart 履쎌뿉 ?덉쓣 ???덉쑝誘濡?selEnd濡?紐낆떆???대룞 ????젣
+                // 커서가 selStart 쪽에 있을 수 있으므로 selEnd로 명시적 이동 후 삭제
                 ic.setSelection(selEnd, selEnd)
             }
             ic.deleteSurroundingText(match.trigger.length + inlineCompletionLen, 0)
@@ -1283,8 +1285,9 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
         val inputType = info?.inputType ?: 0
         val inputClass = inputType and InputType.TYPE_MASK_CLASS
         val variation = inputType and InputType.TYPE_MASK_VARIATION
-        // TYPE_TEXT_VARIATION_URI(0x10)? TYPE_NUMBER_VARIATION_PASSWORD(0x10)媛 媛숈? 媛믪씠??        // inputClass濡?援щ텇 ?꾩슂 (URI ?꾨뱶媛 password濡??섎せ ?≫엳??踰꾧렇 諛⑹?, ?? Chrome URL=0x80011)
-        // PHONE/DATETIME ?대옒?ㅼ뿉??password variation???놁쑝誘濡?else->false ?덉쟾
+        // TYPE_TEXT_VARIATION_URI(0x10)와 TYPE_NUMBER_VARIATION_PASSWORD(0x10)가 같은 값이라
+        // inputClass로 구분 필요 (URI 필드가 password로 잘못 잡히는 버그 방지, 예: Chrome URL=0x80011)
+        // PHONE/DATETIME 클래스에는 password variation이 없으므로 else->false 안전
         isPasswordField = when (inputClass) {
             InputType.TYPE_CLASS_TEXT ->
                 variation == InputType.TYPE_TEXT_VARIATION_PASSWORD ||
@@ -1977,20 +1980,13 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
 
         private val WORD_COMMIT_PUNCTUATION = setOf(".", ",", "!", "?", ";", ":")
 
-        // ?⑤え??multi-tap ?⑹꽦: 媛숈? ?먮え ??踰????⑹꽦 ?먮え
+        // 단모음 multi-tap 합성: 같은 자모 두 번 → 합성 자모
         private val SIMPLE_MULTI_TAP_MAP = mapOf(
-    "ㅏ" to "ㅑ",
-    "ㅓ" to "ㅕ",
-    "ㅗ" to "ㅛ",
-    "ㅜ" to "ㅠ",
-    "ㅐ" to "ㅒ",
-    "ㅔ" to "ㅖ",
-    "ㄱ" to "ㄲ",
-    "ㄷ" to "ㄸ",
-    "ㅂ" to "ㅃ",
-    "ㅅ" to "ㅆ",
-    "ㅈ" to "ㅉ",
-)
+            "ㅏ" to "ㅑ", "ㅓ" to "ㅕ", "ㅗ" to "ㅛ", "ㅜ" to "ㅠ",
+            "ㅐ" to "ㅒ", "ㅔ" to "ㅖ",
+            "ㄱ" to "ㄲ", "ㄷ" to "ㄸ", "ㅂ" to "ㅃ",
+            "ㅅ" to "ㅆ", "ㅈ" to "ㅉ",
+        )
     }
 
 }
