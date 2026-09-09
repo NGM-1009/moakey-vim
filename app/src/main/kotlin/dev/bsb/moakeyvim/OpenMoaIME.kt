@@ -89,6 +89,8 @@ import kotlin.math.roundToInt
 class OpenMoaIME : InputMethodService(), KoinComponent {
 
     private lateinit var binding: OpenMoaImeBinding
+    // Bottom inset reserved for the Android IME navigation/keyboard-switcher area.
+    private var navigationBarInsetBottom = 0
     private lateinit var broadcastReceiver: BroadcastReceiver
     private lateinit var keyboardViews: Map<IMEMode, View>
     private val config: Config by inject()
@@ -644,6 +646,11 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
                 val navigationInsets = insets.getInsetsIgnoringVisibility(
                     WindowInsets.Type.navigationBars()
                 )
+                navigationBarInsetBottom = navigationInsets.bottom
+                applyNavigationBarInsetToInputView()
+
+                // Keep the platform behavior: navigation bar insets are supplied
+                // even when the system navigation area is visually transparent.
                 val adjustedInsets = WindowInsets.Builder(insets)
                     .setInsets(WindowInsets.Type.navigationBars(), navigationInsets)
                     .build()
@@ -1054,6 +1061,12 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
         keyboardViews = buildKeyboardViews()
         val view = layoutInflater.inflate(R.layout.open_moa_ime, null)
         binding = OpenMoaImeBinding.bind(view)
+
+        // The IME window can extend behind the system keyboard-switcher/navigation
+        // area on some Android 15+ devices. Reserve that exact inset inside the
+        // keyboard root so the bottom row is moved above the system area.
+        applyNavigationBarInsetToInputView()
+
         binding.wordSuggestionBar.onPick = ::onSuggestionPicked
         binding.wordSuggestionBar.onWordLongClick = { word -> onSuggestionLongClick(word) }
         binding.wordSuggestionBar.onCursorLeft = {
@@ -1929,6 +1942,20 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
             binding.wordSuggestionBar.applyColors(fg, bg, keyBg)
             binding.clipboardPanel.applyColors(fg, bg)
             binding.wordSuggestionBar.visibility = View.VISIBLE
+        }
+    }
+
+    private fun applyNavigationBarInsetToInputView() {
+        if (!this::binding.isInitialized) return
+
+        val bottom = navigationBarInsetBottom.coerceAtLeast(0)
+        if (binding.root.paddingBottom != bottom) {
+            binding.root.setPadding(
+                binding.root.paddingLeft,
+                binding.root.paddingTop,
+                binding.root.paddingRight,
+                bottom
+            )
         }
     }
 
