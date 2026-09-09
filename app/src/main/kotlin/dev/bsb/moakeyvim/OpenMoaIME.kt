@@ -22,6 +22,8 @@ import android.util.Size
 import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowInsets
+import android.view.WindowManager
 import android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.ExtractedText
@@ -36,8 +38,6 @@ import androidx.autofill.inline.common.ViewStyle
 import androidx.autofill.inline.v1.InlineSuggestionUi
 import androidx.core.content.ContextCompat
 import androidx.core.view.isEmpty
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -91,7 +91,6 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
     private lateinit var binding: OpenMoaImeBinding
     private lateinit var broadcastReceiver: BroadcastReceiver
     private lateinit var keyboardViews: Map<IMEMode, View>
-    private var navigationBarInsetBottom = 0
     private val config: Config by inject()
     private val feedbackPlayer: KeyFeedbackPlayer by inject()
     private val suggestionEngine: SuggestionEngine by inject()
@@ -622,6 +621,35 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
 
     override fun onCreate() {
         super.onCreate()
+
+        // Android 15(API 35)+ edge-to-edge: keep the IME content out of the
+        // system navigation area. This mirrors the platform InputMethodService
+        // window inset handling so the keyboard does not draw underneath the
+        // IME navigation bar / keyboard-switcher area.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val imeWindow = window.window
+            val layoutParams = imeWindow.attributes
+            layoutParams.setFitInsetsTypes(
+                WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars()
+            )
+            layoutParams.setFitInsetsSides(
+                WindowManager.LayoutParams.SIDE_LEFT or
+                    WindowManager.LayoutParams.SIDE_TOP or
+                    WindowManager.LayoutParams.SIDE_RIGHT
+            )
+            layoutParams.setFitInsetsIgnoringVisibility(true)
+            imeWindow.attributes = layoutParams
+
+            imeWindow.decorView.setOnApplyWindowInsetsListener { view, insets ->
+                val navigationInsets = insets.getInsetsIgnoringVisibility(
+                    WindowInsets.Type.navigationBars()
+                )
+                val adjustedInsets = WindowInsets.Builder(insets)
+                    .setInsets(WindowInsets.Type.navigationBars(), navigationInsets)
+                    .build()
+                view.onApplyWindowInsets(adjustedInsets)
+            }
+        }
         broadcastReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
                 suggestionLongPressPopup?.dismiss()
@@ -1019,37 +1047,6 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
         }
     }
 
-    private fun installNavigationBarInsetsListener() {
-        val decorView = window.window?.decorView ?: return
-
-        ViewCompat.setOnApplyWindowInsetsListener(decorView) { _, insets ->
-            updateNavigationBarInsetBottom(insets)
-            insets
-        }
-
-        ViewCompat.requestApplyInsets(decorView)
-        decorView.post {
-            ViewCompat.getRootWindowInsets(decorView)?.let(::updateNavigationBarInsetBottom)
-        }
-    }
-
-    private fun updateNavigationBarInsetBottom(insets: WindowInsetsCompat) {
-        // Android 15(API 35)+ edge-to-edge can place the IME content behind
-        // the system navigation area. Use the largest relevant bottom inset
-        // so the keyboard itself stays above that system-controlled area.
-        val systemBarsBottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom
-        val navigationBarsBottom = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom
-        val tappableElementBottom = insets.getInsets(WindowInsetsCompat.Type.tappableElement()).bottom
-        val newInset = maxOf(systemBarsBottom, navigationBarsBottom, tappableElementBottom)
-
-        if (navigationBarInsetBottom == newInset) return
-        navigationBarInsetBottom = newInset
-
-        if (this::binding.isInitialized) {
-            applyKeyboardLayout()
-        }
-    }
-
     @SuppressLint("InflateParams")
     override fun onCreateInputView(): View {
         super.onCreateInputView()
@@ -1057,7 +1054,6 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
         keyboardViews = buildKeyboardViews()
         val view = layoutInflater.inflate(R.layout.open_moa_ime, null)
         binding = OpenMoaImeBinding.bind(view)
-        installNavigationBarInsetsListener()
         binding.wordSuggestionBar.onPick = ::onSuggestionPicked
         binding.wordSuggestionBar.onWordLongClick = { word -> onSuggestionLongClick(word) }
         binding.wordSuggestionBar.onCursorLeft = {
@@ -1801,13 +1797,6 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
     override fun onWindowShown() {
         super.onWindowShown()
         hardwareKeyboardController.onWindowShown()
-        val decorView = window.window?.decorView
-        if (decorView != null) {
-            ViewCompat.requestApplyInsets(decorView)
-            decorView.post {
-                ViewCompat.getRootWindowInsets(decorView)?.let(::updateNavigationBarInsetBottom)
-            }
-        }
     }
 
     override fun onWindowHidden() {
@@ -1945,13 +1934,12 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
 
     private fun calculateKeyboardHeight(): Int {
         val displayHeight = resources.displayMetrics.heightPixels
-        val availableHeight = (displayHeight - navigationBarInsetBottom).coerceAtLeast(0)
         val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
         if (isLandscape) {
-            return (availableHeight * 0.50f).toInt()
+            return (displayHeight * 0.50f).toInt()
         }
         val heightScale = SettingsPreferences.getKeypadHeight(this).heightScale
-        return (availableHeight * 0.35f * heightScale).toInt()
+        return (displayHeight * 0.35f * heightScale).toInt()
     }
 
     private fun getHeight(): Int {
