@@ -22,7 +22,6 @@ import android.util.Size
 import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowInsets
 import android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.ExtractedText
@@ -620,30 +619,6 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
 
     override fun onCreate() {
         super.onCreate()
-
-        // Android 16 / HyperOS: make the IME window itself avoid the bottom
-        // system area.  The important part is fitting the BOTTOM side;
-        // changing only the keyboard view height/padding is not reliable on
-        // devices where the system draws the IME switcher/navigation area
-        // above the IME surface.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            window.window?.let { imeWindow ->
-                val lp = imeWindow.attributes
-                lp.setFitInsetsTypes(
-                    WindowInsets.Type.statusBars() or
-                        WindowInsets.Type.navigationBars() or
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                            WindowInsets.Type.systemOverlays()
-                        } else {
-                            0
-                        }
-                )
-                lp.setFitInsetsSides(WindowInsets.Side.all())
-                lp.setFitInsetsIgnoringVisibility(true)
-                imeWindow.attributes = lp
-            }
-        }
-
         broadcastReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
                 suggestionLongPressPopup?.dismiss()
@@ -1926,14 +1901,51 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
         }
     }
 
+    /**
+     * Calculate the keyboard height from the usable display area, not the raw
+     * physical display height.
+     *
+     * On Android 16 / HyperOS, the bottom IME-switcher / gesture area can be
+     * drawn over the lower part of an IME. Using displayMetrics.heightPixels
+     * here makes MoaKey request a keyboard that is taller than the space that
+     * the IME window can actually occupy. Other keyboards avoid this by sizing
+     * themselves from the window/insets.
+     */
     private fun calculateKeyboardHeight(): Int {
-        val displayHeight = resources.displayMetrics.heightPixels
         val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        val density = resources.displayMetrics.density
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+            val metrics = wm.maximumWindowMetrics
+            val bounds = metrics.bounds
+            val insets = metrics.windowInsets.getInsetsIgnoringVisibility(
+                WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout()
+            )
+
+            // Prefer the larger bottom exclusion reported by Android. On
+            // gesture-navigation devices tappableElement can be larger than
+            // navigationBars and is the safer boundary for an IME.
+            val tappableBottom = metrics.windowInsets
+                .getInsetsIgnoringVisibility(WindowInsets.Type.tappableElement())
+                .bottom
+            val bottomInset = maxOf(insets.bottom, tappableBottom)
+
+            val usableHeight = (bounds.height() - insets.top - bottomInset).coerceAtLeast(1)
+            val scale = if (isLandscape) 0.50f else {
+                SettingsPreferences.getKeypadHeight(this).heightScale * 0.35f
+            }
+            return (usableHeight * scale).roundToInt().coerceAtLeast((48 * density).roundToInt())
+        }
+
+        // Android versions below 11 do not expose WindowMetrics. Keep the
+        // original sizing behaviour there.
+        val displayHeight = resources.displayMetrics.heightPixels
         if (isLandscape) {
-            return (displayHeight * 0.50f).toInt()
+            return (displayHeight * 0.50f).roundToInt()
         }
         val heightScale = SettingsPreferences.getKeypadHeight(this).heightScale
-        return (displayHeight * 0.35f * heightScale).toInt()
+        return (displayHeight * 0.35f * heightScale).roundToInt()
     }
 
     private fun getHeight(): Int {
