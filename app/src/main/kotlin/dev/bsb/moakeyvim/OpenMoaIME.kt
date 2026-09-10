@@ -1901,69 +1901,14 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
         }
     }
 
-    /**
-     * Calculate the keyboard surface height while reserving the complete bottom
-     * system/navigation area.
-     *
-     * InputMethodService itself owns the IME Window. Android's framework configures
-     * that window as MATCH_PARENT x WRAP_CONTENT, bottom-aligned, and handles its
-     * system-bar fitting. We therefore do not install a second WindowInsets listener
-     * on the IME root here. Doing so can observe the IME window's own coordinate space
-     * rather than the physical navigation area on some Android 16 / HyperOS builds.
-     *
-     * The keyboard view is explicitly sized inside that WRAP_CONTENT window. The
-     * complete bottom system area must therefore be subtracted from the requested
-     * keyboard height. Subtracting it from displayHeight before applying 35% would
-     * remove only 35% of the system area and leave the rest underneath the keyboard.
-     */
     private fun calculateKeyboardHeight(): Int {
         val displayHeight = resources.displayMetrics.heightPixels
-        val isLandscape =
-            resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-
+        val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
         if (isLandscape) {
             return (displayHeight * 0.50f).toInt()
         }
-
         val heightScale = SettingsPreferences.getKeypadHeight(this).heightScale
-        val requestedHeight = (displayHeight * 0.35f * heightScale).toInt()
-        val bottomSystemInset = getNavigationAreaHeightFallback()
-
-        return (requestedHeight - bottomSystemInset).coerceAtLeast(0)
-    }
-
-    /**
-     * Gets the device's navigation/gesture area from Android framework dimensions.
-     * Gesture navigation devices can expose a separate *_gesture dimension, so use
-     * the largest available value. This is only used for the keyboard's own height;
-     * it does not alter the IME Window's system-bar configuration.
-     */
-    private fun getNavigationAreaHeightFallback(): Int {
-        val resourceNames = listOf(
-            "navigation_bar_height_gesture",
-            "navigation_bar_height",
-        )
-
-        var maxHeight = 0
-        for (name in resourceNames) {
-            val resourceId = resources.getIdentifier(name, "dimen", "android")
-            if (resourceId == 0) continue
-
-            val height = runCatching {
-                resources.getDimensionPixelSize(resourceId)
-            }.getOrDefault(0)
-            if (height > maxHeight) {
-                maxHeight = height
-            }
-        }
-
-        // Extremely old/custom framework builds may expose neither dimension.
-        // 48dp is used only as a last resort, not as a device-specific pixel value.
-        return if (maxHeight > 0) {
-            maxHeight
-        } else {
-            (48f * resources.displayMetrics.density).toInt()
-        }
+        return (displayHeight * 0.35f * heightScale).toInt()
     }
 
     private fun getHeight(): Int {
