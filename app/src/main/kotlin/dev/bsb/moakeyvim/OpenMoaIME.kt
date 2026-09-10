@@ -1965,17 +1965,60 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
         })
     }
 
+    /**
+     * Calculate the keyboard height without allowing the keyboard surface to extend
+     * underneath the Android/HyperOS IME navigation area.
+     *
+     * On some Android 16 / HyperOS builds the IME root reports a bottom WindowInsets
+     * value of 0 even though the system still draws the IME switcher/navigation area
+     * over the bottom of the screen.  In that case use Android's navigation-bar
+     * dimension as a conservative fallback.
+     */
     private fun calculateKeyboardHeight(): Int {
         val displayHeight = resources.displayMetrics.heightPixels
-        val usableHeight = (displayHeight - imeBottomSystemInsetPx).coerceAtLeast(0)
-        val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        val isLandscape =
+            resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
         if (isLandscape) {
-            return (usableHeight * 0.50f).toInt()
+            return (displayHeight * 0.50f).toInt()
         }
+
+        val systemBottomInset = maxOf(
+            imeBottomSystemInsetPx,
+            getNavigationBarHeightFallback(),
+        )
+        val usableHeight = (displayHeight - systemBottomInset).coerceAtLeast(0)
 
         val heightScale = SettingsPreferences.getKeypadHeight(this).heightScale
         return (usableHeight * 0.35f * heightScale).toInt()
+    }
+
+    /**
+     * Android can report zero bottom insets to an InputMethodService while the
+     * system still reserves the physical navigation/IME-switcher area.
+     *
+     * The framework resource is preferable to a hard-coded pixel value because
+     * navigation-bar height is density/device dependent.
+     */
+    private fun getNavigationBarHeightFallback(): Int {
+        val resourceId = resources.getIdentifier(
+            "navigation_bar_height",
+            "dimen",
+            "android",
+        )
+
+        if (resourceId != 0) {
+            val resourceHeight = runCatching {
+                resources.getDimensionPixelSize(resourceId)
+            }.getOrDefault(0)
+
+            if (resourceHeight > 0) {
+                return resourceHeight
+            }
+        }
+
+        // Last-resort fallback for devices that expose no framework dimension.
+        return (48f * resources.displayMetrics.density).toInt()
     }
 
     private fun getHeight(): Int {
