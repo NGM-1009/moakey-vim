@@ -35,8 +35,6 @@ import androidx.autofill.inline.common.TextViewStyle
 import androidx.autofill.inline.common.ViewStyle
 import androidx.autofill.inline.v1.InlineSuggestionUi
 import androidx.core.content.ContextCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isEmpty
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import kotlinx.coroutines.CoroutineScope
@@ -89,9 +87,6 @@ import kotlin.math.roundToInt
 class OpenMoaIME : InputMethodService(), KoinComponent {
 
     private lateinit var binding: OpenMoaImeBinding
-    // Bottom system/gesture area that must not be covered by the keyboard.
-    private var imeBottomSystemInsetPx: Int = 0
-    private var imeInsetsListenerInstalled = false
     private lateinit var broadcastReceiver: BroadcastReceiver
     private lateinit var keyboardViews: Map<IMEMode, View>
     private val config: Config by inject()
@@ -1125,7 +1120,6 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
         (keyboardViews[IMEMode.IME_KO_PHONE] as? PhoneView)?.onEditNumberLongKeyRequest = { key ->
             showPhraseEditForm(key)
         }
-        installImeWindowInsetsHandling()
         applyKeyboardLayout()
         setKeyboard(imeMode)
         return view
@@ -1908,71 +1902,19 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
     }
 
     /**
-     * The IME view is a WRAP_CONTENT window. Do not treat the whole physical
-     * display as keyboard space because Android/HyperOS may reserve a bottom
-     * gesture/navigation area inside that display.
+     * Calculate the keyboard surface height while reserving the complete bottom
+     * system/navigation area.
      *
-     * The insets are obtained from the actual IME root view. We only subtract
-     * system/gesture insets; the IME inset itself is intentionally not included
-     * so we do not create a circular height calculation.
-     */
-    private fun installImeWindowInsetsHandling() {
-        if (imeInsetsListenerInstalled) return
-        imeInsetsListenerInstalled = true
-
-        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
-            val systemBars = insets.getInsetsIgnoringVisibility(
-                WindowInsetsCompat.Type.systemBars()
-            )
-            val mandatoryGestures = insets.getInsetsIgnoringVisibility(
-                WindowInsetsCompat.Type.mandatorySystemGestures()
-            )
-            val systemGestures = insets.getInsetsIgnoringVisibility(
-                WindowInsetsCompat.Type.systemGestures()
-            )
-            val tappableElement = insets.getInsetsIgnoringVisibility(
-                WindowInsetsCompat.Type.tappableElement()
-            )
-
-            val bottomInset = maxOf(
-                systemBars.bottom,
-                mandatoryGestures.bottom,
-                systemGestures.bottom,
-                tappableElement.bottom,
-            )
-
-            if (imeBottomSystemInsetPx != bottomInset) {
-                imeBottomSystemInsetPx = bottomInset
-                // The first insets dispatch can happen after the IME view has
-                // already been measured. Re-apply the keyboard size then.
-                binding.root.post { applyKeyboardLayout() }
-            }
-
-            insets
-        }
-
-        ViewCompat.requestApplyInsets(binding.root)
-
-        // onCreateInputView() can run before the IME root is attached. Request
-        // insets again as soon as Android attaches the actual IME window.
-        binding.root.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
-            override fun onViewAttachedToWindow(v: View) {
-                ViewCompat.requestApplyInsets(v)
-                v.post { applyKeyboardLayout() }
-            }
-
-            override fun onViewDetachedFromWindow(v: View) = Unit
-        })
-    }
-
-    /**
-     * Calculate the keyboard height without allowing the keyboard surface to extend
-     * underneath the Android/HyperOS IME navigation area.
+     * InputMethodService itself owns the IME Window. Android's framework configures
+     * that window as MATCH_PARENT x WRAP_CONTENT, bottom-aligned, and handles its
+     * system-bar fitting. We therefore do not install a second WindowInsets listener
+     * on the IME root here. Doing so can observe the IME window's own coordinate space
+     * rather than the physical navigation area on some Android 16 / HyperOS builds.
      *
-     * On some Android 16 / HyperOS builds the IME root reports a bottom WindowInsets
-     * value of 0 even though the system still draws the IME switcher/navigation area
-     * over the bottom of the screen.  In that case use Android's navigation-bar
-     * dimension as a conservative fallback.
+     * The keyboard view is explicitly sized inside that WRAP_CONTENT window. The
+     * complete bottom system area must therefore be subtracted from the requested
+     * keyboard height. Subtracting it from displayHeight before applying 35% would
+     * remove only 35% of the system area and leave the rest underneath the keyboard.
      */
     private fun calculateKeyboardHeight(): Int {
         val displayHeight = resources.displayMetrics.heightPixels
@@ -1983,42 +1925,45 @@ class OpenMoaIME : InputMethodService(), KoinComponent {
             return (displayHeight * 0.50f).toInt()
         }
 
-        val systemBottomInset = maxOf(
-            imeBottomSystemInsetPx,
-            getNavigationBarHeightFallback(),
-        )
-        val usableHeight = (displayHeight - systemBottomInset).coerceAtLeast(0)
-
         val heightScale = SettingsPreferences.getKeypadHeight(this).heightScale
-        return (usableHeight * 0.35f * heightScale).toInt()
+        val requestedHeight = (displayHeight * 0.35f * heightScale).toInt()
+        val bottomSystemInset = getNavigationAreaHeightFallback()
+
+        return (requestedHeight - bottomSystemInset).coerceAtLeast(0)
     }
 
     /**
-     * Android can report zero bottom insets to an InputMethodService while the
-     * system still reserves the physical navigation/IME-switcher area.
-     *
-     * The framework resource is preferable to a hard-coded pixel value because
-     * navigation-bar height is density/device dependent.
+     * Gets the device's navigation/gesture area from Android framework dimensions.
+     * Gesture navigation devices can expose a separate *_gesture dimension, so use
+     * the largest available value. This is only used for the keyboard's own height;
+     * it does not alter the IME Window's system-bar configuration.
      */
-    private fun getNavigationBarHeightFallback(): Int {
-        val resourceId = resources.getIdentifier(
+    private fun getNavigationAreaHeightFallback(): Int {
+        val resourceNames = listOf(
+            "navigation_bar_height_gesture",
             "navigation_bar_height",
-            "dimen",
-            "android",
         )
 
-        if (resourceId != 0) {
-            val resourceHeight = runCatching {
+        var maxHeight = 0
+        for (name in resourceNames) {
+            val resourceId = resources.getIdentifier(name, "dimen", "android")
+            if (resourceId == 0) continue
+
+            val height = runCatching {
                 resources.getDimensionPixelSize(resourceId)
             }.getOrDefault(0)
-
-            if (resourceHeight > 0) {
-                return resourceHeight
+            if (height > maxHeight) {
+                maxHeight = height
             }
         }
 
-        // Last-resort fallback for devices that expose no framework dimension.
-        return (48f * resources.displayMetrics.density).toInt()
+        // Extremely old/custom framework builds may expose neither dimension.
+        // 48dp is used only as a last resort, not as a device-specific pixel value.
+        return if (maxHeight > 0) {
+            maxHeight
+        } else {
+            (48f * resources.displayMetrics.density).toInt()
+        }
     }
 
     private fun getHeight(): Int {
